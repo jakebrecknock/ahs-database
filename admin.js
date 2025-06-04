@@ -9,14 +9,59 @@ import {
   query,
   where
 } from 'https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js';
+import { jsPDF } from 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
 
 // Format numbers as accounting format (x,xxx.00)
 function formatAccounting(num) {
-  return parseFloat(num).toLocaleString('en-US', {
+  return parseFloat(num || 0).toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
 }
+
+// Calculate labor cost (total - materials - fees + discount)
+function calculateLabor(total, materialsTotal, fees, discount) {
+  return (total || 0) - (materialsTotal || 0) - (fees || 0) + (discount || 0);
+}
+
+// Generate PDF for individual estimate
+window.generatePDF = function(id, data) {
+  const doc = new jsPDF();
+  
+  // PDF Header
+  doc.setFontSize(18);
+  doc.setTextColor(183, 65, 14);
+  doc.text('Handyman Services Estimate', 105, 20, null, null, 'center');
+  
+  // Client Information
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Client: ${data.name || 'Unnamed'}`, 20, 40);
+  doc.text(`Email: ${data.email || 'N/A'}`, 20, 50);
+  doc.text(`Phone: ${data.phone || 'N/A'}`, 20, 60);
+  doc.text(`Location: ${data.location || 'No location'}`, 20, 70);
+  doc.text(`Service: ${data.service || 'Not specified'}`, 20, 80);
+  
+  // Pricing Details
+  doc.text('Materials:', 20, 100);
+  let materialsY = 110;
+  if (data.materials) {
+    Object.entries(data.materials).forEach(([name, details]) => {
+      doc.text(`${name}: ${details.quantity} x $${formatAccounting(details.price)} = $${formatAccounting(details.quantity * details.price)}`, 25, materialsY);
+      materialsY += 10;
+    });
+  }
+  
+  doc.text(`Materials Subtotal: $${formatAccounting(data.materialsTotal)}`, 20, materialsY + 10);
+  doc.text(`Labor: $${formatAccounting(data.labor)} (${data.workers || 1} workers x ${data.days || 1} days)`, 20, materialsY + 20);
+  doc.text(`Fees: $${formatAccounting(data.fees)}`, 20, materialsY + 30);
+  doc.text(`Discount: $${formatAccounting(data.discount)}`, 20, materialsY + 40);
+  doc.setFontSize(14);
+  doc.text(`Total Estimate: $${formatAccounting(data.total)}`, 20, materialsY + 55);
+  
+  // Save the PDF
+  doc.save(`Estimate-${data.name || 'Unnamed'}-${new Date().toISOString().slice(0,10)}.pdf`);
+};
 
 // Load quotes with filtering
 async function loadQuotes(filterField = '', filterValue = '') {
@@ -25,7 +70,7 @@ async function loadQuotes(filterField = '', filterValue = '') {
     const quotesCollection = collection(db, "quotes");
     
     if (filterField && filterValue) {
-      if (['total', 'labor', 'materialsTotal'].includes(filterField)) {
+      if (['total', 'labor', 'materialsTotal', 'fees', 'discount'].includes(filterField)) {
         const numValue = parseFloat(filterValue);
         if (!isNaN(numValue)) {
           q = query(quotesCollection, where(filterField, "==", numValue));
@@ -84,15 +129,18 @@ async function loadQuotes(filterField = '', filterValue = '') {
               ${materialsList}
             </div>
             <div class="price-summary">
-              <p><strong>Materials Total:</strong> $${formatAccounting(data.materialsTotal || 0)}</p>
-              <p><strong>Labor:</strong> $${formatAccounting(data.labor || 0)}</p>
-              <p class="total-price"><strong>Total Estimate:</strong> $${formatAccounting(data.total || 0)}</p>
+              <p><strong>Materials Total:</strong> $${formatAccounting(data.materialsTotal)}</p>
+              <p><strong>Labor:</strong> $${formatAccounting(data.labor)} (${data.workers || 1} workers × ${data.days || 1} days)</p>
+              <p><strong>Fees:</strong> $${formatAccounting(data.fees)}</p>
+              <p><strong>Discount:</strong> $${formatAccounting(data.discount)}</p>
+              <p class="total-price"><strong>Total Estimate:</strong> $${formatAccounting(data.total)}</p>
             </div>
           </div>
         </div>
         <div class="quote-actions">
           <button class="edit-btn" onclick="editQuote('${docSnap.id}')"><i class="fas fa-edit"></i> Edit</button>
           <button class="delete-btn" onclick="deleteQuote('${docSnap.id}')"><i class="fas fa-trash"></i> Delete</button>
+          <button class="pdf-btn" onclick="generatePDF('${docSnap.id}', ${JSON.stringify(data).replace(/"/g, '&quot;')})"><i class="fas fa-file-pdf"></i> PDF</button>
         </div>
       `;
       list.appendChild(card);
@@ -104,20 +152,7 @@ async function loadQuotes(filterField = '', filterValue = '') {
   }
 }
 
-// Delete quote with confirmation
-window.deleteQuote = async function(id) {
-  if (!confirm("Are you sure you want to permanently delete this estimate?")) return;
-  
-  try {
-    await deleteDoc(doc(db, "quotes", id));
-    loadQuotes();
-  } catch (error) {
-    console.error("Error deleting quote:", error);
-    alert("Failed to delete estimate. Please try again.");
-  }
-};
-
-// Edit quote with correct default values
+// Edit quote with all new fields
 window.editQuote = async function(id) {
   try {
     const docRef = doc(db, "quotes", id);
@@ -165,8 +200,16 @@ window.editQuote = async function(id) {
         </div>
         
         <div class="form-section">
-          <h4>Pricing</h4>
-          <label>Labor Cost: $<input type="number" value="${data.labor || 0}" min="0" step="0.01" id="labor-input" required></label>
+          <h4>Labor Details</h4>
+          <label>Number of Workers: <input type="number" value="${data.workers || 1}" min="1" step="1" id="workers-input" required></label>
+          <label>Number of Days: <input type="number" value="${data.days || 1}" min="1" step="1" id="days-input" required></label>
+          <label>Labor Cost: $<input type="number" value="${formatAccounting(data.labor || calculateLabor(data.total, data.materialsTotal, data.fees, data.discount))}" min="0" step="0.01" id="labor-input" required></label>
+        </div>
+        
+        <div class="form-section">
+          <h4>Additional Costs</h4>
+          <label>Fees: $<input type="number" value="${formatAccounting(data.fees || 0)}" min="0" step="0.01" id="fees-input" required></label>
+          <label>Discount: $<input type="number" value="${formatAccounting(data.discount || 0)}" min="0" step="0.01" id="discount-input" required></label>
         </div>
         
         <div class="form-buttons">
@@ -181,34 +224,7 @@ window.editQuote = async function(id) {
   }
 };
 
-// Cancel editing - fixed functionality
-window.cancelEdit = function(id) {
-  loadQuotes();
-};
-
-// Add new material field
-window.addMaterialField = function() {
-  const container = document.getElementById('materials-container');
-  const newIndex = container.querySelectorAll('.material-edit').length;
-  
-  const div = document.createElement('div');
-  div.className = 'material-edit';
-  div.dataset.index = newIndex;
-  div.innerHTML = `
-    <input type="text" placeholder="Material name" required>
-    <input type="number" placeholder="Qty" min="1" step="1" required>
-    <input type="number" placeholder="Price" min="0" step="0.01" required>
-    <button type="button" class="remove-material" onclick="removeMaterialField(this)"><i class="fas fa-times"></i></button>
-  `;
-  container.appendChild(div);
-};
-
-// Remove material field
-window.removeMaterialField = function(button) {
-  button.closest('.material-edit').remove();
-};
-
-// Save quote with all details
+// Save quote with all new fields
 window.saveQuote = async function(id) {
   try {
     const form = document.querySelector(`.quote-card[data-id="${id}"] .edit-form`);
@@ -234,7 +250,12 @@ window.saveQuote = async function(id) {
     
     const labor = parseFloat(document.getElementById('labor-input').value);
     const service = document.getElementById('service-input').value;
-    const total = materialsTotal + labor;
+    const workers = parseInt(document.getElementById('workers-input').value);
+    const days = parseInt(document.getElementById('days-input').value);
+    const fees = parseFloat(document.getElementById('fees-input').value);
+    const discount = parseFloat(document.getElementById('discount-input').value);
+    
+    const total = materialsTotal + labor + fees - discount;
     
     await updateDoc(doc(db, "quotes", id), {
       name: form.querySelector('input[type="text"]').value,
@@ -242,9 +263,13 @@ window.saveQuote = async function(id) {
       phone: form.querySelector('input[type="tel"]').value,
       location: form.querySelectorAll('input[type="text"]')[1].value,
       service: service,
+      workers: workers,
+      days: days,
       materials,
       materialsTotal,
       labor,
+      fees,
+      discount,
       total,
       lastUpdated: new Date()
     });
@@ -255,6 +280,7 @@ window.saveQuote = async function(id) {
     alert("Failed to save changes. Please try again.");
   }
 };
+
 
 // Filter functionality
 window.applyFilter = function() {
