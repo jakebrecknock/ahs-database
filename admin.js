@@ -53,8 +53,8 @@ async function loadQuotes(searchTerm = '') {
     quotes.forEach(quote => {
       const materialsTotal = calcMaterialsTotal(quote.materials);
       const labor = quote.labor || (quote.total - materialsTotal);
-      const discountAmount = (quote.discount || 0) * quote.total / 100;
-      const finalTotal = quote.total - discountAmount + (quote.fees || 0);
+      const discountAmount = (quote.discount || 0) * (materialsTotal + labor) / 100;
+      const finalTotal = (materialsTotal + labor) - discountAmount + (quote.fees || 0);
       
       const card = document.createElement("div");
       card.className = "quote-card";
@@ -165,21 +165,21 @@ window.editQuote = async function(id) {
           <h4>Client Information</h4>
           <div class="form-group">
             <label><i class="fas fa-user"></i> Client Name</label>
-            <input type="text" value="${data.name || ''}" required>
+            <input type="text" value="${data.name || ''}" id="name-input" required>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label><i class="fas fa-envelope"></i> Email</label>
-              <input type="email" value="${data.email || ''}">
+              <input type="email" value="${data.email || ''}" id="email-input">
             </div>
             <div class="form-group">
               <label><i class="fas fa-phone"></i> Phone</label>
-              <input type="tel" value="${data.phone || ''}">
+              <input type="tel" value="${data.phone || ''}" id="phone-input">
             </div>
           </div>
           <div class="form-group">
             <label><i class="fas fa-map-marker-alt"></i> Location</label>
-            <input type="text" value="${data.location || ''}" required>
+            <input type="text" value="${data.location || ''}" id="location-input" required>
           </div>
         </div>
         
@@ -187,44 +187,12 @@ window.editQuote = async function(id) {
           <h4>Project Details</h4>
           <div class="form-group">
             <label><i class="fas fa-project-diagram"></i> Project Name</label>
-            <input type="text" value="${data.project || ''}" required>
+            <input type="text" value="${data.project || ''}" id="project-input" required>
           </div>
         </div>
         
         <div class="form-section">
-          <h4>Pricing</h4>
-          <div class="form-group">
-            <label><i class="fas fa-tools"></i> Labor Cost</label>
-            <input type="number" value="${labor}" min="0" step="0.01" required>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label><i class="fas fa-percentage"></i> Discount (%)</label>
-              <input type="number" value="${data.discount || 0}" min="0" max="100">
-            </div>
-            <div class="form-group">
-              <label><i class="fas fa-dollar-sign"></i> Fees ($)</label>
-              <input type="number" value="${data.fees || 0}" min="0" step="0.01">
-            </div>
-          </div>
-        </div>
-        
-        <div class="form-section">
-          <h4>Job Details</h4>
-          <div class="form-row">
-            <div class="form-group">
-              <label><i class="fas fa-calendar-day"></i> Days Needed</label>
-              <input type="number" value="${data.days || 1}" min="1">
-            </div>
-            <div class="form-group">
-              <label><i class="fas fa-users"></i> Workers</label>
-              <input type="number" value="${data.workers || 1}" min="1">
-            </div>
-          </div>
-        </div>
-        
-        <div class="form-section">
-          <h4><i class="fas fa-boxes"></i> Materials</h4>
+          <h4>Materials</h4>
           <div id="materials-container">
             ${data.materials ? Object.entries(data.materials).map(([name, item]) => `
               <div class="material-edit-item">
@@ -240,6 +208,38 @@ window.editQuote = async function(id) {
           <button type="button" class="add-material" onclick="addMaterialField()">
             <i class="fas fa-plus"></i> Add Material
           </button>
+        </div>
+        
+        <div class="form-section">
+          <h4>Pricing</h4>
+          <div class="form-group">
+            <label><i class="fas fa-tools"></i> Labor Cost</label>
+            <input type="number" value="${labor}" min="0" step="0.01" id="labor-input" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label><i class="fas fa-percentage"></i> Discount (%)</label>
+              <input type="number" value="${data.discount || 0}" min="0" max="100" id="discount-input">
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-dollar-sign"></i> Fees ($)</label>
+              <input type="number" value="${data.fees || 0}" min="0" step="0.01" id="fees-input">
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-section">
+          <h4>Job Details</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label><i class="fas fa-calendar-day"></i> Days Needed</label>
+              <input type="number" value="${data.days || 1}" min="1" id="days-input">
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-users"></i> Workers</label>
+              <input type="number" value="${data.workers || 1}" min="1" id="workers-input">
+            </div>
+          </div>
         </div>
         
         <div class="form-actions">
@@ -278,44 +278,46 @@ window.addMaterialField = function() {
 window.saveQuote = async function(id) {
   try {
     const form = document.querySelector(`.quote-card[data-id="${id}"] .edit-form`);
-    const inputs = form.querySelectorAll('input');
     const materials = {};
     
     // Collect materials data
     form.querySelectorAll('.material-edit-item').forEach(item => {
-      const matInputs = item.querySelectorAll('input');
-      const name = matInputs[0].value.trim();
+      const inputs = item.querySelectorAll('input');
+      const name = inputs[0].value.trim();
       if (name) {
         materials[name] = {
-          quantity: parseInt(matInputs[1].value) || 1,
-          price: parseFloat(matInputs[2].value) || 0
+          quantity: parseFloat(inputs[1].value) || 1,
+          price: parseFloat(inputs[2].value) || 0
         };
       }
     });
     
-    // Calculate totals
+    // Calculate totals CORRECTLY
     const materialsTotal = Object.values(materials).reduce((sum, item) => 
       sum + (item.price * item.quantity), 0);
-    const labor = parseFloat(inputs[4].value);
-    const discount = parseFloat(inputs[5].value) || 0;
-    const fees = parseFloat(inputs[6].value) || 0;
-    const total = materialsTotal + labor;
-    const finalTotal = total - (total * discount / 100) + fees;
+    const labor = parseFloat(document.getElementById('labor-input').value);
+    const discount = parseFloat(document.getElementById('discount-input').value) || 0;
+    const fees = parseFloat(document.getElementById('fees-input').value) || 0;
+    
+    // CORRECT CALCULATION:
+    const subtotal = materialsTotal + labor;
+    const discountAmount = subtotal * discount / 100;
+    const total = subtotal - discountAmount + fees;
     
     await updateDoc(doc(db, "quotes", id), {
-      name: inputs[0].value.trim(),
-      email: inputs[1].value.trim(),
-      phone: inputs[2].value.trim(),
-      location: inputs[3].value.trim(),
-      project: inputs[4].value.trim(),
+      name: document.getElementById('name-input').value.trim(),
+      email: document.getElementById('email-input').value.trim(),
+      phone: document.getElementById('phone-input').value.trim(),
+      location: document.getElementById('location-input').value.trim(),
+      project: document.getElementById('project-input').value.trim(),
       materials,
       materialsTotal,
       labor,
       discount,
       fees,
-      days: parseInt(inputs[7].value) || 1,
-      workers: parseInt(inputs[8].value) || 1,
-      total: finalTotal,
+      days: parseInt(document.getElementById('days-input').value) || 1,
+      workers: parseInt(document.getElementById('workers-input').value) || 1,
+      total,
       lastUpdated: new Date()
     });
     
@@ -351,8 +353,8 @@ window.generatePDF = async function(id) {
     const data = docSnap.data();
     const materialsTotal = calcMaterialsTotal(data.materials);
     const labor = data.labor || (data.total - materialsTotal);
-    const discountAmount = (data.discount || 0) * data.total / 100;
-    const finalTotal = data.total - discountAmount + (data.fees || 0);
+    const discountAmount = (data.discount || 0) * (materialsTotal + labor) / 100;
+    const finalTotal = (materialsTotal + labor) - discountAmount + (data.fees || 0);
     
     const win = window.open('', '_blank');
     win.document.write(`
