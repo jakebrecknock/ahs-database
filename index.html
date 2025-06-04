@@ -1,20 +1,39 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Viewer</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Estimates</title>
   <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div id="sidebar">
-    <h2>Quote Admin Panel</h2>
-    <input type="text" id="searchBox" placeholder="Search quotes...">
-    <button onclick="exportToCSV()">Export CSV</button>
+    <h2>Estimates Dashboard</h2>
+    
+    <div class="filter-controls">
+      <label for="filter-field">Filter By:</label>
+      <select id="filter-field">
+        <option value="">-- Select Field --</option>
+        <option value="name">Client Name</option>
+        <option value="email">Email</option>
+        <option value="phone">Phone</option>
+        <option value="location">Location</option>
+        <option value="service">Service</option>
+      </select>
+      
+      <label for="filter-value">Search Value:</label>
+      <input type="text" id="filter-value" placeholder="Enter search term">
+      
+      <button id="filter-button">Apply Filter</button>
+    </div>
+    
+    <button onclick="exportToCSV()">Export to CSV</button>
   </div>
 
   <div id="main">
-    <h1>Submitted Quotes</h1>
+    <h1>Current Estimates</h1>
     <div id="quote-list"></div>
   </div>
 

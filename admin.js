@@ -1,3 +1,4 @@
+// admin.js
 import { db } from './firebase.js';
 import {
   collection,
@@ -5,13 +6,22 @@ import {
   getDoc,
   deleteDoc,
   doc,
-  updateDoc
+  updateDoc,
+  query,
+  where
 } from 'https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js';
 
-// Load all quotes from Firestore
-async function loadQuotes() {
+// Load all quotes with filtering
+async function loadQuotes(filterField = '', filterValue = '') {
   try {
-    const querySnapshot = await getDocs(collection(db, "quotes"));
+    let q;
+    if (filterField && filterValue) {
+      q = query(collection(db, "quotes"), where(filterField, ">=", filterValue), where(filterField, "<=", filterValue + '\uf8ff'));
+    } else {
+      q = collection(db, "quotes");
+    }
+
+    const querySnapshot = await getDocs(q);
     const list = document.getElementById("quote-list");
     list.innerHTML = "";
 
@@ -20,13 +30,40 @@ async function loadQuotes() {
       const card = document.createElement("div");
       card.className = "quote-card";
       card.dataset.id = docSnap.id;
+      
+      // Format materials list
+      const materialsList = data.materials ? 
+        Object.entries(data.materials).map(([name, details]) => `
+          <div class="material-item">
+            <span>${name}</span>
+            <span>Qty: ${details.quantity}</span>
+            <span>$${details.price} ($${details.quantity * details.price})</span>
+          </div>
+        `).join('') : '<p>No materials specified</p>';
+      
       card.innerHTML = `
         <div class="quote-content">
-          <h3>${data.name || "Unnamed"}</h3>
-          <p><strong>Email:</strong> ${data.email || "N/A"}</p>
-          <p><strong>Estimate:</strong> $${data.total || "0.00"}</p>
-          <p><strong>Details:</strong> ${data.details || "No details provided"}</p>
-          <p><strong>Date:</strong> ${new Date(data.timestamp?.toDate()).toLocaleString() || "Unknown date"}</p>
+          <div class="quote-header">
+            <h3>${data.name || "Unnamed"}</h3>
+            <span class="location">${data.location || "No location"}</span>
+          </div>
+          <div class="quote-details">
+            <p><strong>Email:</strong> ${data.email || "N/A"}</p>
+            <p><strong>Phone:</strong> ${data.phone || "N/A"}</p>
+            <p><strong>Service:</strong> ${data.service || "Not specified"}</p>
+            <p><strong>Date:</strong> ${new Date(data.timestamp?.toDate()).toLocaleString() || "Unknown"}</p>
+          </div>
+          <div class="pricing-details">
+            <div class="materials-list">
+              <h4>Materials</h4>
+              ${materialsList}
+            </div>
+            <div class="price-summary">
+              <p><strong>Materials Total:</strong> $${data.materialsTotal || "0.00"}</p>
+              <p><strong>Labor:</strong> $${data.labor || "0.00"}</p>
+              <p class="total-price"><strong>Total Estimate:</strong> $${data.total || "0.00"}</p>
+            </div>
+          </div>
         </div>
         <div class="quote-actions">
           <button class="edit-btn" onclick="editQuote('${docSnap.id}')">Edit</button>
@@ -40,36 +77,58 @@ async function loadQuotes() {
   }
 }
 
-// Edit a specific quote
+// Edit quote functionality
 window.editQuote = async function(id) {
   try {
     const docRef = doc(db, "quotes", id);
     const docSnap = await getDoc(docRef);
     
-    if (!docSnap.exists()) {
-      console.error("No such document!");
-      return;
-    }
+    if (!docSnap.exists()) return;
 
     const data = docSnap.data();
     const card = document.querySelector(`.quote-card[data-id="${id}"]`);
     
+    // Format materials for editing
+    const materialsFields = data.materials ? 
+      Object.entries(data.materials).map(([name, details], index) => `
+        <div class="material-edit" data-index="${index}">
+          <input type="text" value="${name}" placeholder="Material name" required>
+          <input type="number" value="${details.quantity}" placeholder="Qty" min="1" step="1" required>
+          <input type="number" value="${details.price}" placeholder="Price" min="0" step="0.01" required>
+          <button type="button" class="remove-material" onclick="removeMaterialField(this)">×</button>
+        </div>
+      `).join('') : '';
+    
     card.querySelector('.quote-content').innerHTML = `
       <form class="edit-form" onsubmit="saveQuote('${id}'); return false;">
-        <label for="edit-name-${id}">Name:</label>
-        <input type="text" id="edit-name-${id}" value="${data.name || ''}" required>
+        <div class="form-section">
+          <h4>Client Information</h4>
+          <label>Name: <input type="text" value="${data.name || ''}" required></label>
+          <label>Email: <input type="email" value="${data.email || ''}" required></label>
+          <label>Phone: <input type="tel" value="${data.phone || ''}"></label>
+          <label>Location: <input type="text" value="${data.location || ''}" required></label>
+        </div>
         
-        <label for="edit-email-${id}">Email:</label>
-        <input type="email" id="edit-email-${id}" value="${data.email || ''}" required>
+        <div class="form-section">
+          <h4>Service Details</h4>
+          <label>Service Provided: <input type="text" value="${data.service || ''}" required></label>
+        </div>
         
-        <label for="edit-total-${id}">Estimate ($):</label>
-        <input type="number" id="edit-total-${id}" value="${data.total || ''}" step="0.01" required>
+        <div class="form-section">
+          <h4>Materials</h4>
+          <div id="materials-container">
+            ${materialsFields}
+          </div>
+          <button type="button" class="add-material" onclick="addMaterialField()">+ Add Material</button>
+        </div>
         
-        <label for="edit-details-${id}">Details:</label>
-        <textarea id="edit-details-${id}" required>${data.details || ''}</textarea>
+        <div class="form-section">
+          <h4>Pricing</h4>
+          <label>Labor Cost: $<input type="number" value="${data.labor || ''}" min="0" step="0.01" required></label>
+        </div>
         
         <div class="form-buttons">
-          <button type="submit" class="save-btn">Save</button>
+          <button type="submit" class="save-btn">Save Changes</button>
           <button type="button" class="cancel-btn" onclick="cancelEdit('${id}')">Cancel</button>
         </div>
       </form>
@@ -79,22 +138,69 @@ window.editQuote = async function(id) {
   }
 };
 
-// Save edited quote
+// Add new material field
+window.addMaterialField = function() {
+  const container = document.getElementById('materials-container');
+  const newIndex = container.querySelectorAll('.material-edit').length;
+  
+  const div = document.createElement('div');
+  div.className = 'material-edit';
+  div.dataset.index = newIndex;
+  div.innerHTML = `
+    <input type="text" placeholder="Material name" required>
+    <input type="number" placeholder="Qty" min="1" step="1" required>
+    <input type="number" placeholder="Price" min="0" step="0.01" required>
+    <button type="button" class="remove-material" onclick="removeMaterialField(this)">×</button>
+  `;
+  container.appendChild(div);
+};
+
+// Remove material field
+window.removeMaterialField = function(button) {
+  button.closest('.material-edit').remove();
+};
+
+// Save quote with all details
 window.saveQuote = async function(id) {
   try {
-    const name = document.getElementById(`edit-name-${id}`).value;
-    const email = document.getElementById(`edit-email-${id}`).value;
-    const total = document.getElementById(`edit-total-${id}`).value;
-    const details = document.getElementById(`edit-details-${id}`).value;
-
+    const form = document.querySelector(`.quote-card[data-id="${id}"] .edit-form`);
+    const formData = new FormData(form);
+    
+    // Collect materials
+    const materials = {};
+    let materialsTotal = 0;
+    
+    form.querySelectorAll('.material-edit').forEach(item => {
+      const inputs = item.querySelectorAll('input');
+      const name = inputs[0].value;
+      const quantity = parseFloat(inputs[1].value);
+      const price = parseFloat(inputs[2].value);
+      
+      materials[name] = {
+        quantity: quantity,
+        price: price,
+        total: quantity * price
+      };
+      
+      materialsTotal += quantity * price;
+    });
+    
+    const labor = parseFloat(form.querySelector('input[type="number"]').value);
+    const total = materialsTotal + labor;
+    
     await updateDoc(doc(db, "quotes", id), {
-      name,
-      email,
-      total: parseFloat(total),
-      details,
+      name: form.querySelector('input[type="text"]').value,
+      email: form.querySelector('input[type="email"]').value,
+      phone: form.querySelector('input[type="tel"]').value,
+      location: form.querySelectorAll('input[type="text"]')[1].value,
+      service: form.querySelectorAll('input[type="text"]')[2].value,
+      materials,
+      materialsTotal,
+      labor,
+      total,
       lastUpdated: new Date()
     });
-
+    
     loadQuotes();
   } catch (error) {
     console.error("Error saving quote:", error);
@@ -102,65 +208,21 @@ window.saveQuote = async function(id) {
   }
 };
 
-// Cancel editing
-window.cancelEdit = function(id) {
-  loadQuotes();
-};
-
-// Delete a quote
-window.deleteQuote = async function(id) {
-  if (confirm("Are you sure you want to delete this quote?")) {
-    try {
-      await deleteDoc(doc(db, "quotes", id));
-      loadQuotes();
-    } catch (error) {
-      console.error("Error deleting quote:", error);
-    }
+// Filter functionality
+window.applyFilter = function() {
+  const filterField = document.getElementById('filter-field').value;
+  const filterValue = document.getElementById('filter-value').value.trim();
+  
+  if (filterField && filterValue) {
+    loadQuotes(filterField, filterValue);
+  } else {
+    loadQuotes();
   }
 };
 
-// Export to CSV
-window.exportToCSV = async function() {
-  try {
-    const querySnapshot = await getDocs(collection(db, "quotes"));
-    const rows = [["Name", "Email", "Estimate", "Details", "Date"]];
-    
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      rows.push([
-        data.name || "",
-        data.email || "",
-        `$${data.total || "0.00"}`,
-        data.details || "",
-        new Date(data.timestamp?.toDate()).toLocaleString() || ""
-      ]);
-    });
-
-    const csvContent = "data:text/csv;charset=utf-8," + 
-      rows.map(e => e.map(field => `"${field.replace(/"/g, '""')}"`).join(",")).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `quotes_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } catch (error) {
-    console.error("Error exporting to CSV:", error);
-  }
-};
-
-// Search functionality
-document.getElementById("searchBox").addEventListener("input", function() {
-  const filter = this.value.toLowerCase();
-  document.querySelectorAll(".quote-card").forEach(card => {
-    const text = card.textContent.toLowerCase();
-    card.style.display = text.includes(filter) ? "" : "none";
-  });
-});
-
-// Initialize the page
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
   loadQuotes();
+  document.getElementById('filter-button').addEventListener('click', applyFilter);
 });
+
