@@ -120,7 +120,7 @@ async function loadQuotes(filterField = '', filterValue = '') {
           <div class="quote-details">
             <p><strong>Email:</strong> ${data.email || "N/A"}</p>
             <p><strong>Phone:</strong> ${data.phone || "N/A"}</p>
-            <p><strong>Service:</strong> <span class="service-type">${data.service || "Not specified"}</span></p>
+            <p><strong>Service:</strong> ${data.service || "Not specified"}</p>
             <p><strong>Date:</strong> ${new Date(data.timestamp?.toDate()).toLocaleString() || "Unknown"}</p>
           </div>
           <div class="pricing-details">
@@ -152,20 +152,7 @@ async function loadQuotes(filterField = '', filterValue = '') {
   }
 }
 
-// Delete quote with confirmation
-window.deleteQuote = async function(id) {
-  if (!confirm("Are you sure you want to permanently delete this estimate?")) return;
-  
-  try {
-    await deleteDoc(doc(db, "quotes", id));
-    loadQuotes();
-  } catch (error) {
-    console.error("Error deleting quote:", error);
-    alert("Failed to delete estimate. Please try again.");
-  }
-};
-
-// Edit quote with service type dropdown
+// Edit quote with all new fields
 window.editQuote = async function(id) {
   try {
     const docRef = doc(db, "quotes", id);
@@ -215,6 +202,8 @@ window.editQuote = async function(id) {
           </label>
         </div>
         
+        <!-- Rest of your form remains the same -->
+        ${card.querySelector('.quote-content').innerHTML.includes('materials-container') ? '' : `
         <div class="form-section">
           <h4>Materials</h4>
           <div id="materials-container">
@@ -235,6 +224,7 @@ window.editQuote = async function(id) {
           <label>Fees: $<input type="number" value="${formatAccounting(data.fees || 0)}" min="0" step="0.01" id="fees-input" required></label>
           <label>Discount: $<input type="number" value="${formatAccounting(data.discount || 0)}" min="0" step="0.01" id="discount-input" required></label>
         </div>
+        `}
         
         <div class="form-buttons">
           <button type="submit" class="save-btn"><i class="fas fa-save"></i> Save Changes</button>
@@ -248,34 +238,7 @@ window.editQuote = async function(id) {
   }
 };
 
-// Cancel editing
-window.cancelEdit = function(id) {
-  loadQuotes();
-};
-
-// Add new material field
-window.addMaterialField = function() {
-  const container = document.getElementById('materials-container');
-  const newIndex = container.querySelectorAll('.material-edit').length;
-  
-  const div = document.createElement('div');
-  div.className = 'material-edit';
-  div.dataset.index = newIndex;
-  div.innerHTML = `
-    <input type="text" placeholder="Material name" required>
-    <input type="number" placeholder="Qty" min="1" step="1" required>
-    <input type="number" placeholder="Price" min="0" step="0.01" required>
-    <button type="button" class="remove-material" onclick="removeMaterialField(this)"><i class="fas fa-times"></i></button>
-  `;
-  container.appendChild(div);
-};
-
-// Remove material field
-window.removeMaterialField = function(button) {
-  button.closest('.material-edit').remove();
-};
-
-// Save quote with all details
+// Save quote with all new fields
 window.saveQuote = async function(id) {
   try {
     const form = document.querySelector(`.quote-card[data-id="${id}"] .edit-form`);
