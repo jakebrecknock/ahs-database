@@ -1,124 +1,425 @@
 :root {
-  --coral: #FF7F50;
-  --rust: #B7410E;
-  --deep-red: #9B2D1F;
-  --light-coral: #FFD8CC;
-  --white: #FFFFFF;
-  --dark: #333333;
-  --light-gray: #F5F5F5;
-  --medium-gray: #E0E0E0;
-  --success: #28a745;
-  --danger: #dc3545;
-  --info: #17a2b8;
+  --primary: #B7410E;
+  --primary-light: #FF7F50;
+  --primary-lightest: #FFD8CC;
+  --secondary: #2C3E50;
+  --text: #333333;
+  --text-light: #777777;
+  --background: #F8F9FA;
+  --card-bg: #FFFFFF;
+  --border: #E0E0E0;
+  --success: #28A745;
+  --danger: #DC3545;
+  --info: #17A2B8;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
   font-family: 'Roboto', sans-serif;
-  margin: 0;
-  padding: 0;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text);
+  background-color: var(--background);
   display: flex;
   min-height: 100vh;
-  background-color: var(--light-gray);
-  color: var(--dark);
 }
 
+/* Improved typography */
+h1, h2, h3, h4 {
+  font-weight: 500;
+  color: var(--primary);
+}
+
+/* Sidebar */
 #sidebar {
-  width: 300px;
-  background: linear-gradient(to bottom, var(--rust), var(--deep-red));
-  padding: 20px;
+  width: 280px;
+  background: linear-gradient(to bottom, var(--primary), #9B2D1F);
+  padding: 25px;
   color: white;
   position: fixed;
   height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
 }
 
-.filter-controls {
-  margin-bottom: 20px;
+#sidebar h2 {
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--primary-light);
+  font-size: 1.5rem;
+}
+
+/* Search area */
+.search-container {
   background: rgba(255,255,255,0.1);
   padding: 15px;
   border-radius: 8px;
+  margin-bottom: 20px;
 }
 
-.filter-controls select,
-.filter-controls input {
+.search-container label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--primary-lightest);
+}
+
+#search-input {
   width: 100%;
-  padding: 8px;
+  padding: 10px 15px;
   margin-bottom: 10px;
   border: none;
   border-radius: 4px;
+  font-size: 16px;
+  background-color: rgba(255,255,255,0.9);
 }
 
+/* Buttons */
+.button {
+  display: inline-block;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.button-primary {
+  background-color: var(--primary-light);
+  color: white;
+}
+
+.button-primary:hover {
+  background-color: var(--primary);
+}
+
+.button-secondary {
+  background-color: #6C757D;
+  color: white;
+}
+
+.button-secondary:hover {
+  background-color: #5A6268;
+}
+
+.button-success {
+  background-color: var(--success);
+  color: white;
+}
+
+.button-danger {
+  background-color: var(--danger);
+  color: white;
+}
+
+/* Main content */
 #main {
   flex: 1;
-  padding: 20px;
-  margin-left: 300px;
+  padding: 30px;
+  margin-left: 280px;
+  max-width: 100%;
 }
 
+#main h1 {
+  margin-bottom: 25px;
+  font-size: 2rem;
+}
+
+/* Quote cards */
 .quote-card {
-  background: white;
-  margin-bottom: 15px;
+  background: var(--card-bg);
+  margin-bottom: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
   display: flex;
+  transition: transform 0.2s;
+}
+
+.quote-card:hover {
+  transform: translateY(-3px);
 }
 
 .quote-content {
   flex: 1;
-  padding: 15px;
+  padding: 25px;
 }
 
-.quote-actions {
+.quote-header {
   display: flex;
-  flex-direction: column;
-  padding: 15px;
-  background: rgba(183,65,14,0.05);
-  min-width: 150px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
 }
 
-button {
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  color: white;
+.quote-header h3 {
+  font-size: 1.3rem;
+  color: var(--primary);
 }
 
-.edit-btn { background-color: var(--coral); }
-.delete-btn { background-color: var(--danger); }
-.pdf-btn { background-color: var(--success); }
-.save-btn { background-color: var(--rust); }
-.cancel-btn { background-color: var(--medium-gray); color: var(--dark); }
+.project-badge {
+  background-color: var(--primary-lightest);
+  color: var(--primary);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
 
+.quote-meta {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+/* Materials section */
+.materials-section {
+  margin: 20px 0;
+}
+
+.materials-list {
+  margin-top: 10px;
+}
+
+.material-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.material-item:last-child {
+  border-bottom: none;
+}
+
+.material-qty {
+  color: var(--text-light);
+}
+
+.material-total {
+  font-weight: 500;
+}
+
+/* Price summary */
 .price-summary {
   background: rgba(255,127,80,0.05);
   padding: 15px;
   border-radius: 6px;
+  margin: 20px 0;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.price-row.total {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: var(--primary);
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 2px solid var(--primary-lightest);
+}
+
+.price-row.discount {
+  color: var(--success);
+}
+
+.price-row.fees {
+  color: var(--info);
+}
+
+/* Job details */
+.job-details {
+  display: flex;
+  gap: 15px;
   margin-top: 15px;
 }
 
-.total-price {
-  font-weight: bold;
-  color: var(--deep-red);
-  font-size: 1.1em;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--light-coral);
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-light);
 }
 
-@media (max-width: 768px) {
+/* Quote actions */
+.quote-actions {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: rgba(183,65,14,0.05);
+  border-left: 1px solid var(--border);
+  min-width: 160px;
+}
+
+.quote-actions button {
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+/* Edit form */
+.edit-form {
+  padding: 15px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 15px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+/* Materials edit */
+.materials-edit {
+  margin: 20px 0;
+}
+
+.material-edit-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.material-edit-item input {
+  flex: 1;
+  padding: 8px;
+}
+
+.remove-material {
+  background: var(--danger);
+  color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-material {
+  background: var(--primary-light);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+/* Form actions */
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.form-actions button {
+  flex: 1;
+}
+
+/* Status messages */
+.loading, .no-results, .error {
+  padding: 20px;
+  text-align: center;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.loading {
+  background-color: #E3F2FD;
+  color: #0D47A1;
+}
+
+.no-results {
+  background-color: #FFF8E1;
+  color: #FF8F00;
+}
+
+.error {
+  background-color: #FFEBEE;
+  color: #C62828;
+}
+
+/* Responsive design */
+@media (max-width: 992px) {
   #sidebar {
     width: 100%;
     position: static;
     height: auto;
   }
+  
   #main {
     margin-left: 0;
   }
+  
   .quote-card {
     flex-direction: column;
   }
+  
   .quote-actions {
     flex-direction: row;
-    justify-content: center;
+    flex-wrap: wrap;
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+  
+  .quote-actions button {
+    margin: 5px;
+    flex: 1 0 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .material-edit-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+  }
+  
+  .job-details {
+    flex-direction: column;
+    gap: 5px;
   }
 }
