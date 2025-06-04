@@ -1,48 +1,245 @@
+/* Base Styles */
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
+
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
   padding: 0;
   display: flex;
   min-height: 100vh;
-  background-color: #fdfdfd;
+  background-color: #f8f9fa;
+  color: #333;
+  line-height: 1.6;
 }
+
+/* Sidebar Styles */
 #sidebar {
-  width: 250px;
-  background-color: #F2E1E1;
-  padding: 20px;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  width: 280px;
+  background-color: #343a40;
+  padding: 25px;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  color: white;
 }
+
+#sidebar h2 {
+  color: #fff;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #495057;
+}
+
+/* Search Box */
+#searchBox {
+  width: 100%;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #495057;
+  color: white;
+}
+
+#searchBox::placeholder {
+  color: #adb5bd;
+}
+
+/* Main Content Area */
 #main {
   flex: 1;
-  padding: 20px;
+  padding: 30px;
   overflow-y: auto;
+  background-color: #f8f9fa;
 }
+
+#main h1 {
+  color: #343a40;
+  margin-bottom: 25px;
+}
+
+/* Quote List Layout */
 #quote-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
 }
+
+/* Quote Card Styles */
 .quote-card {
-  background: #AF4C4C;
-  color: black;
-  padding: 15px;
-  border-radius: 6px;
-  border: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  background: white;
+  color: #212529;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 5px solid #6c757d;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
+
+.quote-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.quote-content {
+  flex: 1;
+}
+
+.quote-content h3 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.quote-content p {
+  margin-bottom: 8px;
+}
+
+.quote-content strong {
+  color: #495057;
+}
+
+/* Action Buttons */
+.quote-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  min-width: 100px;
+}
+
 button {
-  margin-top: 10px;
-  padding: 8px 12px;
-  background-color: #ed3b4b;
-  color: white;
+  padding: 8px 15px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
 }
-input[type="text"] {
+
+.edit-btn {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.edit-btn:hover {
+  background-color: #138496;
+}
+
+.delete-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #c82333;
+}
+
+/* Export Button */
+#sidebar button {
   width: 100%;
-  padding: 8px;
-  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #28a745;
+  color: white;
+  margin-bottom: 15px;
+}
+
+#sidebar button:hover {
+  background-color: #218838;
+}
+
+/* Edit Form Styles */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+.edit-form label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.edit-form input,
+.edit-form textarea {
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.edit-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.save-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.save-btn:hover {
+  background-color: #218838;
+}
+
+.cancel-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background-color: #5a6268;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  body {
+    flex-direction: column;
+  }
+
+  #sidebar {
+    width: 100%;
+    padding: 15px;
+  }
+
+  .quote-card {
+    flex-direction: column;
+  }
+
+  .quote-actions {
+    flex-direction: row;
+    margin-top: 15px;
+    justify-content: flex-start;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.quote-card {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Status Indicators */
+.quote-card.new {
+  border-left-color: #28a745;
+}
+
+.quote-card.updated {
+  border-left-color: #ffc107;
 }
