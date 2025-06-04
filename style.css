@@ -1,0 +1,48 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  min-height: 100vh;
+  background-color: #fdfdfd;
+}
+#sidebar {
+  width: 250px;
+  background-color: #F2E1E1;
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+#main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+#quote-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.quote-card {
+  background: #AF4C4C;
+  color: black;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #333;
+}
+button {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #ed3b4b;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+}
