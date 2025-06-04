@@ -1,4 +1,3 @@
-// admin.js
 import { db } from './firebase.js';
 import {
   collection,
@@ -11,7 +10,6 @@ import {
   where
 } from 'https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js';
 
-
 // Format numbers as accounting format (x,xxx.00)
 function formatAccounting(num) {
   return parseFloat(num).toLocaleString('en-US', {
@@ -20,7 +18,6 @@ function formatAccounting(num) {
   });
 }
 
-
 // Load quotes with filtering
 async function loadQuotes(filterField = '', filterValue = '') {
   try {
@@ -28,13 +25,12 @@ async function loadQuotes(filterField = '', filterValue = '') {
     const quotesCollection = collection(db, "quotes");
     
     if (filterField && filterValue) {
-      // Special handling for numeric fields
       if (['total', 'labor', 'materialsTotal'].includes(filterField)) {
         const numValue = parseFloat(filterValue);
         if (!isNaN(numValue)) {
           q = query(quotesCollection, where(filterField, "==", numValue));
         } else {
-          q = quotesCollection; // Fallback to all if invalid number
+          q = quotesCollection;
         }
       } else {
         q = query(quotesCollection, 
@@ -46,17 +42,14 @@ async function loadQuotes(filterField = '', filterValue = '') {
       q = quotesCollection;
     }
 
-
     const querySnapshot = await getDocs(q);
     const list = document.getElementById("quote-list");
     list.innerHTML = "";
-
 
     if (querySnapshot.empty) {
       list.innerHTML = '<div class="no-results">No estimates found matching your criteria</div>';
       return;
     }
-
 
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
@@ -64,7 +57,6 @@ async function loadQuotes(filterField = '', filterValue = '') {
       card.className = "quote-card";
       card.dataset.id = docSnap.id;
       
-      // Format materials list
       const materialsList = data.materials ? 
         Object.entries(data.materials).map(([name, details]) => `
           <div class="material-item">
@@ -99,8 +91,8 @@ async function loadQuotes(filterField = '', filterValue = '') {
           </div>
         </div>
         <div class="quote-actions">
-          <button class="edit-btn" onclick="editQuote('${docSnap.id}')">Edit</button>
-          <button class="delete-btn" onclick="deleteQuote('${docSnap.id}')">Delete</button>
+          <button class="edit-btn" onclick="editQuote('${docSnap.id}')"><i class="fas fa-edit"></i> Edit</button>
+          <button class="delete-btn" onclick="deleteQuote('${docSnap.id}')"><i class="fas fa-trash"></i> Delete</button>
         </div>
       `;
       list.appendChild(card);
@@ -111,7 +103,6 @@ async function loadQuotes(filterField = '', filterValue = '') {
       '<div class="error">Error loading estimates. Please try again.</div>';
   }
 }
-
 
 // Delete quote with confirmation
 window.deleteQuote = async function(id) {
@@ -126,8 +117,7 @@ window.deleteQuote = async function(id) {
   }
 };
 
-
-// Edit quote - corrected labor cost field
+// Edit quote with correct default values
 window.editQuote = async function(id) {
   try {
     const docRef = doc(db, "quotes", id);
@@ -138,18 +128,16 @@ window.editQuote = async function(id) {
       return;
     }
 
-
     const data = docSnap.data();
     const card = document.querySelector(`.quote-card[data-id="${id}"]`);
     
-    // Format materials for editing
     const materialsFields = data.materials ? 
       Object.entries(data.materials).map(([name, details], index) => `
         <div class="material-edit" data-index="${index}">
           <input type="text" value="${name}" placeholder="Material name" required>
           <input type="number" value="${details.quantity}" placeholder="Qty" min="1" step="1" required>
           <input type="number" value="${details.price}" placeholder="Price" min="0" step="0.01" required>
-          <button type="button" class="remove-material" onclick="removeMaterialField(this)">×</button>
+          <button type="button" class="remove-material" onclick="removeMaterialField(this)"><i class="fas fa-times"></i></button>
         </div>
       `).join('') : '';
     
@@ -165,7 +153,7 @@ window.editQuote = async function(id) {
         
         <div class="form-section">
           <h4>Service Details</h4>
-          <label>Service Provided: <input type="text" value="${data.service || ''}" required></label>
+          <label>Service Provided: <input type="text" value="${data.service || ''}" id="service-input" required></label>
         </div>
         
         <div class="form-section">
@@ -173,17 +161,17 @@ window.editQuote = async function(id) {
           <div id="materials-container">
             ${materialsFields}
           </div>
-          <button type="button" class="add-material" onclick="addMaterialField()">+ Add Material</button>
+          <button type="button" class="add-material" onclick="addMaterialField()"><i class="fas fa-plus"></i> Add Material</button>
         </div>
         
         <div class="form-section">
           <h4>Pricing</h4>
-          <label>Labor Cost: $<input type="number" value="${data.labor || 0}" min="0" step="0.01" required id="labor-input"></label>
+          <label>Labor Cost: $<input type="number" value="${data.labor || 0}" min="0" step="0.01" id="labor-input" required></label>
         </div>
         
         <div class="form-buttons">
-          <button type="submit" class="save-btn">Save Changes</button>
-          <button type="button" class="cancel-btn" onclick="cancelEdit('${id}')">Cancel</button>
+          <button type="submit" class="save-btn"><i class="fas fa-save"></i> Save Changes</button>
+          <button type="button" class="cancel-btn" onclick="cancelEdit('${id}')"><i class="fas fa-times"></i> Cancel</button>
         </div>
       </form>
     `;
@@ -193,8 +181,34 @@ window.editQuote = async function(id) {
   }
 };
 
+// Cancel editing - fixed functionality
+window.cancelEdit = function(id) {
+  loadQuotes();
+};
 
-// Save quote - fixed labor cost reference
+// Add new material field
+window.addMaterialField = function() {
+  const container = document.getElementById('materials-container');
+  const newIndex = container.querySelectorAll('.material-edit').length;
+  
+  const div = document.createElement('div');
+  div.className = 'material-edit';
+  div.dataset.index = newIndex;
+  div.innerHTML = `
+    <input type="text" placeholder="Material name" required>
+    <input type="number" placeholder="Qty" min="1" step="1" required>
+    <input type="number" placeholder="Price" min="0" step="0.01" required>
+    <button type="button" class="remove-material" onclick="removeMaterialField(this)"><i class="fas fa-times"></i></button>
+  `;
+  container.appendChild(div);
+};
+
+// Remove material field
+window.removeMaterialField = function(button) {
+  button.closest('.material-edit').remove();
+};
+
+// Save quote with all details
 window.saveQuote = async function(id) {
   try {
     const form = document.querySelector(`.quote-card[data-id="${id}"] .edit-form`);
@@ -218,8 +232,8 @@ window.saveQuote = async function(id) {
       materialsTotal += quantity * price;
     });
     
-    // Fixed labor cost reference - now using the correct ID
-    const labor = parseFloat(form.querySelector('#labor-input').value);
+    const labor = parseFloat(document.getElementById('labor-input').value);
+    const service = document.getElementById('service-input').value;
     const total = materialsTotal + labor;
     
     await updateDoc(doc(db, "quotes", id), {
@@ -227,7 +241,7 @@ window.saveQuote = async function(id) {
       email: form.querySelector('input[type="email"]').value,
       phone: form.querySelector('input[type="tel"]').value,
       location: form.querySelectorAll('input[type="text"]')[1].value,
-      service: form.querySelectorAll('input[type="text"]')[2].value,
+      service: service,
       materials,
       materialsTotal,
       labor,
@@ -242,8 +256,7 @@ window.saveQuote = async function(id) {
   }
 };
 
-
-// Filter functionality - tested all fields
+// Filter functionality
 window.applyFilter = function() {
   const filterField = document.getElementById('filter-field').value;
   const filterValue = document.getElementById('filter-value').value.trim();
@@ -251,10 +264,9 @@ window.applyFilter = function() {
   if (filterField && filterValue) {
     loadQuotes(filterField, filterValue);
   } else {
-    loadQuotes(); // Reset to show all if no filter
+    loadQuotes();
   }
 };
-
 
 // Reset filters
 window.resetFilters = function() {
@@ -262,7 +274,6 @@ window.resetFilters = function() {
   document.getElementById('filter-value').value = '';
   loadQuotes();
 };
-
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
