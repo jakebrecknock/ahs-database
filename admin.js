@@ -5,9 +5,7 @@ import {
   getDoc,
   deleteDoc,
   doc,
-  updateDoc,
-  query,
-  where
+  updateDoc
 } from 'https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js';
 
 // Format currency
@@ -16,21 +14,17 @@ const formatMoney = (num) => parseFloat(num || 0).toLocaleString('en-US', {
   currency: 'USD'
 });
 
-// Search all fields for text
+// Search quotes by name, location, or project
 async function searchQuotes(searchText) {
   const quotesRef = collection(db, "quotes");
   const snapshot = await getDocs(quotesRef);
-  const results = [];
   
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    const searchStr = JSON.stringify(data).toLowerCase();
-    if (searchStr.includes(searchText.toLowerCase())) {
-      results.push({ id: doc.id, ...data });
-    }
-  });
-  
-  return results;
+  return snapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() }))
+    .filter(quote => {
+      const searchStr = `${quote.name||''} ${quote.location||''} ${quote.project||''}`.toLowerCase();
+      return searchStr.includes(searchText.toLowerCase());
+    });
 }
 
 // Calculate materials total
@@ -44,14 +38,14 @@ function calcMaterialsTotal(materials) {
 async function loadQuotes(searchTerm = '') {
   try {
     const list = document.getElementById("quote-list");
-    list.innerHTML = "<div class='loading'>Loading estimates...</div>";
+    list.innerHTML = "<div class='loading'><i class='fas fa-spinner fa-spin'></i> Loading estimates...</div>";
     
     const quotes = searchTerm 
       ? await searchQuotes(searchTerm)
       : (await getDocs(collection(db, "quotes"))).docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     if (quotes.length === 0) {
-      list.innerHTML = `<div class="no-results">${searchTerm ? 'No matches found' : 'No estimates yet'}</div>`;
+      list.innerHTML = `<div class="no-results"><i class="fas fa-info-circle"></i> ${searchTerm ? 'No matches found' : 'No estimates yet'}</div>`;
       return;
     }
 
@@ -73,8 +67,13 @@ async function loadQuotes(searchTerm = '') {
           </div>
           
           <div class="quote-meta">
-            <span><i class="fas fa-calendar"></i> ${new Date(quote.timestamp?.toDate()).toLocaleDateString()}</span>
             <span><i class="fas fa-map-marker-alt"></i> ${quote.location || "No Location"}</span>
+            <span><i class="fas fa-calendar"></i> ${new Date(quote.timestamp?.toDate()).toLocaleDateString()}</span>
+          </div>
+          
+          <div class="contact-info">
+            ${quote.email ? `<p><i class="fas fa-envelope"></i> ${quote.email}</p>` : ''}
+            ${quote.phone ? `<p><i class="fas fa-phone"></i> ${quote.phone}</p>` : ''}
           </div>
           
           <div class="materials-section">
@@ -128,13 +127,13 @@ async function loadQuotes(searchTerm = '') {
         </div>
         
         <div class="quote-actions">
-          <button class="edit-btn" onclick="editQuote('${quote.id}')">
+          <button class="action-btn edit-btn" onclick="editQuote('${quote.id}')">
             <i class="fas fa-edit"></i> Edit
           </button>
-          <button class="pdf-btn" onclick="generatePDF('${quote.id}')">
+          <button class="action-btn pdf-btn" onclick="generatePDF('${quote.id}')">
             <i class="fas fa-file-pdf"></i> PDF
           </button>
-          <button class="delete-btn" onclick="deleteQuote('${quote.id}')">
+          <button class="action-btn delete-btn" onclick="deleteQuote('${quote.id}')">
             <i class="fas fa-trash"></i> Delete
           </button>
         </div>
@@ -142,13 +141,13 @@ async function loadQuotes(searchTerm = '') {
       list.appendChild(card);
     });
   } catch (error) {
-    console.error("Error loading quotes:", error);
+    console.error("Error:", error);
     document.getElementById("quote-list").innerHTML = 
       '<div class="error"><i class="fas fa-exclamation-triangle"></i> Failed to load estimates</div>';
   }
 }
 
-// Edit quote with materials editing
+// Edit quote with all fields
 window.editQuote = async function(id) {
   try {
     const docRef = doc(db, "quotes", id);
@@ -160,41 +159,71 @@ window.editQuote = async function(id) {
     const card = document.querySelector(`.quote-card[data-id="${id}"]`);
     card.querySelector('.quote-content').innerHTML = `
       <form class="edit-form" onsubmit="saveQuote('${id}'); return false;">
-        <h3>Edit Estimate</h3>
+        <h3><i class="fas fa-edit"></i> Edit Estimate</h3>
         
-        <div class="form-group">
-          <label>Project Name</label>
-          <input type="text" value="${data.project || ''}" required>
-        </div>
-        
-        <div class="form-group">
-          <label>Labor Cost</label>
-          <input type="number" value="${labor}" min="0" step="0.01" required>
-        </div>
-        
-        <div class="form-row">
+        <div class="form-section">
+          <h4>Client Information</h4>
           <div class="form-group">
-            <label>Discount (%)</label>
-            <input type="number" value="${data.discount || 0}" min="0" max="100">
+            <label><i class="fas fa-user"></i> Client Name</label>
+            <input type="text" value="${data.name || ''}" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label><i class="fas fa-envelope"></i> Email</label>
+              <input type="email" value="${data.email || ''}">
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-phone"></i> Phone</label>
+              <input type="tel" value="${data.phone || ''}">
+            </div>
           </div>
           <div class="form-group">
-            <label>Fees ($)</label>
-            <input type="number" value="${data.fees || 0}" min="0" step="0.01">
-          </div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label>Days Needed</label>
-            <input type="number" value="${data.days || 1}" min="1">
-          </div>
-          <div class="form-group">
-            <label>Workers</label>
-            <input type="number" value="${data.workers || 1}" min="1">
+            <label><i class="fas fa-map-marker-alt"></i> Location</label>
+            <input type="text" value="${data.location || ''}" required>
           </div>
         </div>
         
-        <div class="materials-edit">
+        <div class="form-section">
+          <h4>Project Details</h4>
+          <div class="form-group">
+            <label><i class="fas fa-project-diagram"></i> Project Name</label>
+            <input type="text" value="${data.project || ''}" required>
+          </div>
+        </div>
+        
+        <div class="form-section">
+          <h4>Pricing</h4>
+          <div class="form-group">
+            <label><i class="fas fa-tools"></i> Labor Cost</label>
+            <input type="number" value="${labor}" min="0" step="0.01" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label><i class="fas fa-percentage"></i> Discount (%)</label>
+              <input type="number" value="${data.discount || 0}" min="0" max="100">
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-dollar-sign"></i> Fees ($)</label>
+              <input type="number" value="${data.fees || 0}" min="0" step="0.01">
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-section">
+          <h4>Job Details</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label><i class="fas fa-calendar-day"></i> Days Needed</label>
+              <input type="number" value="${data.days || 1}" min="1">
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-users"></i> Workers</label>
+              <input type="number" value="${data.workers || 1}" min="1">
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-section">
           <h4><i class="fas fa-boxes"></i> Materials</h4>
           <div id="materials-container">
             ${data.materials ? Object.entries(data.materials).map(([name, item]) => `
@@ -224,7 +253,7 @@ window.editQuote = async function(id) {
       </form>
     `;
   } catch (error) {
-    console.error("Error editing quote:", error);
+    console.error("Error:", error);
     alert("Failed to load estimate for editing");
   }
 };
@@ -245,49 +274,54 @@ window.addMaterialField = function() {
   container.appendChild(div);
 };
 
-// Save quote with materials
+// Save quote with all fields
 window.saveQuote = async function(id) {
   try {
     const form = document.querySelector(`.quote-card[data-id="${id}"] .edit-form`);
+    const inputs = form.querySelectorAll('input');
     const materials = {};
     
     // Collect materials data
     form.querySelectorAll('.material-edit-item').forEach(item => {
-      const inputs = item.querySelectorAll('input');
-      const name = inputs[0].value.trim();
+      const matInputs = item.querySelectorAll('input');
+      const name = matInputs[0].value.trim();
       if (name) {
         materials[name] = {
-          quantity: parseInt(inputs[1].value) || 1,
-          price: parseFloat(inputs[2].value) || 0
+          quantity: parseInt(matInputs[1].value) || 1,
+          price: parseFloat(matInputs[2].value) || 0
         };
       }
     });
     
-    // Calculate new totals
+    // Calculate totals
     const materialsTotal = Object.values(materials).reduce((sum, item) => 
       sum + (item.price * item.quantity), 0);
-    const labor = parseFloat(form.querySelector('input[type="number"]').value);
-    const discount = parseFloat(form.querySelectorAll('input[type="number"]')[1].value) || 0;
-    const fees = parseFloat(form.querySelectorAll('input[type="number"]')[2].value) || 0;
+    const labor = parseFloat(inputs[4].value);
+    const discount = parseFloat(inputs[5].value) || 0;
+    const fees = parseFloat(inputs[6].value) || 0;
     const total = materialsTotal + labor;
     const finalTotal = total - (total * discount / 100) + fees;
     
     await updateDoc(doc(db, "quotes", id), {
-      project: form.querySelector('input[type="text"]').value,
+      name: inputs[0].value.trim(),
+      email: inputs[1].value.trim(),
+      phone: inputs[2].value.trim(),
+      location: inputs[3].value.trim(),
+      project: inputs[4].value.trim(),
       materials,
       materialsTotal,
       labor,
       discount,
       fees,
+      days: parseInt(inputs[7].value) || 1,
+      workers: parseInt(inputs[8].value) || 1,
       total: finalTotal,
-      days: parseInt(form.querySelectorAll('input[type="number"]')[3].value) || 1,
-      workers: parseInt(form.querySelectorAll('input[type="number"]')[4].value) || 1,
       lastUpdated: new Date()
     });
     
     loadQuotes();
   } catch (error) {
-    console.error("Error saving quote:", error);
+    console.error("Error:", error);
     alert("Failed to save changes");
   }
 };
@@ -304,141 +338,153 @@ window.deleteQuote = async function(id) {
     await deleteDoc(doc(db, "quotes", id));
     loadQuotes();
   } catch (error) {
-    console.error("Error deleting quote:", error);
+    console.error("Error:", error);
     alert("Failed to delete estimate");
   }
 };
 
 // Generate PDF
 window.generatePDF = async function(id) {
-  const docRef = doc(db, "quotes", id);
-  const docSnap = await getDoc(docRef);
-  const data = docSnap.data();
-  
-  const materialsTotal = calcMaterialsTotal(data.materials);
-  const labor = data.labor || (data.total - materialsTotal);
-  const discountAmount = (data.discount || 0) * data.total / 100;
-  const finalTotal = data.total - discountAmount + (data.fees || 0);
-  
-  const win = window.open('', '_blank');
-  win.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Estimate #${id}</title>
-      <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
-        body { font-family: 'Roboto', sans-serif; padding: 20px; color: #333; }
-        .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .company { color: #B7410E; font-size: 24px; font-weight: 500; }
-        .title { font-size: 28px; color: #B7410E; margin: 20px 0; }
-        .client-info { margin-bottom: 30px; }
-        .section-title { background: #FF7F50; color: white; padding: 8px 12px; margin: 15px 0; }
-        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        th { background: #f5f5f5; text-align: left; padding: 10px; }
-        td { padding: 10px; border-bottom: 1px solid #eee; }
-        .total-row { font-weight: bold; font-size: 1.1em; }
-        .footer { margin-top: 40px; font-size: 12px; text-align: center; color: #777; }
-        .job-details { display: flex; gap: 20px; margin-top: 20px; }
-        .detail-box { border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <div class="company">Handyman Pro</div>
-        <div>Estimate #${id.substring(0, 8)}</div>
-      </div>
-      
-      <h1 class="title">Project Estimate</h1>
-      
-      <div class="client-info">
-        <p><strong>Client:</strong> ${data.name || "Not specified"}</p>
-        <p><strong>Project:</strong> ${data.project || "General work"}</p>
-        <p><strong>Date:</strong> ${new Date(data.timestamp?.toDate()).toLocaleDateString()}</p>
-      </div>
-      
-      <div class="section-title">Materials</div>
-      <table>
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Quantity</th>
-            <th>Unit Price</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${data.materials ? Object.entries(data.materials).map(([name, item]) => `
+  try {
+    const docRef = doc(db, "quotes", id);
+    const docSnap = await getDoc(docRef);
+    const data = docSnap.data();
+    const materialsTotal = calcMaterialsTotal(data.materials);
+    const labor = data.labor || (data.total - materialsTotal);
+    const discountAmount = (data.discount || 0) * data.total / 100;
+    const finalTotal = data.total - discountAmount + (data.fees || 0);
+    
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Estimate #${id.substring(0, 8)}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
+          body { font-family: 'Roboto', sans-serif; padding: 25px; color: #333; line-height: 1.6; }
+          .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+          .company { color: #B7410E; font-size: 24px; font-weight: 500; }
+          .title { font-size: 28px; color: #B7410E; margin: 25px 0; border-bottom: 2px solid #FF7F50; padding-bottom: 10px; }
+          .client-info { margin-bottom: 30px; }
+          .client-info p { margin: 8px 0; }
+          .section-title { background: #FF7F50; color: white; padding: 10px 15px; margin: 25px 0 15px; border-radius: 4px; }
+          table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+          th { background: #f5f5f5; text-align: left; padding: 12px; font-weight: 500; }
+          td { padding: 12px; border-bottom: 1px solid #eee; }
+          .total-row { font-weight: bold; font-size: 1.1em; }
+          .job-details { display: flex; gap: 20px; margin-top: 30px; }
+          .detail-box { border: 1px solid #ddd; padding: 15px; border-radius: 6px; flex: 1; text-align: center; }
+          .footer { margin-top: 50px; font-size: 14px; text-align: center; color: #777; border-top: 1px solid #eee; padding-top: 20px; }
+          .text-center { text-align: center; }
+          .material-name { width: 40%; }
+          .material-numbers { width: 20%; text-align: right; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="company">Handyman Pro</div>
+          <div>Estimate #${id.substring(0, 8)}</div>
+        </div>
+        
+        <h1 class="title">Project Estimate</h1>
+        
+        <div class="client-info">
+          <p><strong>Client:</strong> ${data.name || "Not specified"}</p>
+          <p><strong>Project:</strong> ${data.project || "General work"}</p>
+          <p><strong>Location:</strong> ${data.location || "Not specified"}</p>
+          ${data.email ? `<p><strong>Email:</strong> ${data.email}</p>` : ''}
+          ${data.phone ? `<p><strong>Phone:</strong> ${data.phone}</p>` : ''}
+          <p><strong>Date:</strong> ${new Date(data.timestamp?.toDate()).toLocaleDateString()}</p>
+        </div>
+        
+        <div class="section-title">Materials</div>
+        <table>
+          <thead>
             <tr>
-              <td>${name}</td>
-              <td>${item.quantity}</td>
-              <td>${formatMoney(item.price)}</td>
-              <td>${formatMoney(item.price * item.quantity)}</td>
+              <th class="material-name">Item</th>
+              <th class="material-numbers">Qty</th>
+              <th class="material-numbers">Unit Price</th>
+              <th class="material-numbers">Total</th>
             </tr>
-          `).join('') : '<tr><td colspan="4">No materials specified</td></tr>'}
-        </tbody>
-      </table>
-      
-      <div class="section-title">Summary</div>
-      <table>
-        <tr>
-          <td>Materials Subtotal</td>
-          <td>${formatMoney(materialsTotal)}</td>
-        </tr>
-        <tr>
-          <td>Labor</td>
-          <td>${formatMoney(labor)}</td>
-        </tr>
-        ${data.discount ? `
-        <tr>
-          <td>Discount (${data.discount}%)</td>
-          <td>-${formatMoney(discountAmount)}</td>
-        </tr>` : ''}
-        ${data.fees ? `
-        <tr>
-          <td>Fees</td>
-          <td>+${formatMoney(data.fees)}</td>
-        </tr>` : ''}
-        <tr class="total-row">
-          <td>TOTAL ESTIMATE</td>
-          <td>${formatMoney(finalTotal)}</td>
-        </tr>
-      </table>
-      
-      <div class="job-details">
-        <div class="detail-box">
-          <strong>Estimated Duration:</strong> ${data.days || 1} day${data.days !== 1 ? 's' : ''}
+          </thead>
+          <tbody>
+            ${data.materials ? Object.entries(data.materials).map(([name, item]) => `
+              <tr>
+                <td>${name}</td>
+                <td class="material-numbers">${item.quantity}</td>
+                <td class="material-numbers">${formatMoney(item.price)}</td>
+                <td class="material-numbers">${formatMoney(item.price * item.quantity)}</td>
+              </tr>
+            `).join('') : '<tr><td colspan="4" class="text-center">No materials specified</td></tr>'}
+          </tbody>
+        </table>
+        
+        <div class="section-title">Summary</div>
+        <table>
+          <tr>
+            <td>Materials Subtotal</td>
+            <td class="material-numbers">${formatMoney(materialsTotal)}</td>
+          </tr>
+          <tr>
+            <td>Labor</td>
+            <td class="material-numbers">${formatMoney(labor)}</td>
+          </tr>
+          ${data.discount ? `
+          <tr>
+            <td>Discount (${data.discount}%)</td>
+            <td class="material-numbers">-${formatMoney(discountAmount)}</td>
+          </tr>` : ''}
+          ${data.fees ? `
+          <tr>
+            <td>Fees</td>
+            <td class="material-numbers">+${formatMoney(data.fees)}</td>
+          </tr>` : ''}
+          <tr class="total-row">
+            <td>TOTAL ESTIMATE</td>
+            <td class="material-numbers">${formatMoney(finalTotal)}</td>
+          </tr>
+        </table>
+        
+        <div class="job-details">
+          <div class="detail-box">
+            <strong>Estimated Duration</strong><br>
+            ${data.days || 1} day${data.days !== 1 ? 's' : ''}
+          </div>
+          <div class="detail-box">
+            <strong>Workers Required</strong><br>
+            ${data.workers || 1}
+          </div>
         </div>
-        <div class="detail-box">
-          <strong>Workers:</strong> ${data.workers || 1}
+        
+        <div class="footer">
+          <p>Thank you for choosing Handyman Pro!</p>
+          <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
         </div>
-      </div>
-      
-      <div class="footer">
-        <p>Thank you for your business!</p>
-        <p>Generated on ${new Date().toLocaleDateString()}</p>
-      </div>
-      
-      <script>
-        setTimeout(() => {
-          window.print();
-          window.close();
-        }, 300);
-      </script>
-    </body>
-    </html>
-  `);
-  win.document.close();
+        
+        <script>
+          setTimeout(() => {
+            window.print();
+            window.close();
+          }, 300);
+        </script>
+      </body>
+      </html>
+    `);
+    win.document.close();
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    alert("Failed to generate PDF");
+  }
 };
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   loadQuotes();
   
-  // Simple search functionality
+  // Search functionality
   const searchInput = document.getElementById('search-input');
   const searchBtn = document.getElementById('search-button');
-  const resetBtn = document.getElementById('reset-button');
   
   searchBtn.addEventListener('click', () => {
     if (searchInput.value.trim()) {
@@ -446,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-  resetBtn.addEventListener('click', () => {
+  document.getElementById('reset-button').addEventListener('click', () => {
     searchInput.value = '';
     loadQuotes();
   });
