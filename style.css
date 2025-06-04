@@ -260,9 +260,6 @@ body {
   margin-top: 10px;
 }
 
-/* [Previous CSS remains the same until the buttons section...] */
-
-/* Buttons */
 .quote-actions {
   display: flex;
   flex-direction: column;
@@ -270,21 +267,16 @@ body {
   background: rgba(183, 65, 14, 0.05);
   border-left: 1px solid var(--medium-gray);
   min-width: 150px;
-  gap: 10px;
 }
 
-.edit-btn, .delete-btn, .pdf-btn {
+.edit-btn, .delete-btn {
   padding: 10px 15px;
+  margin-bottom: 10px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.3s;
-  font-family: inherit;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
 }
 
 .edit-btn {
@@ -303,15 +295,6 @@ body {
 
 .delete-btn:hover {
   background-color: #C82333;
-}
-
-.pdf-btn {
-  background-color: #6c757d;
-  color: white;
-}
-
-.pdf-btn:hover {
-  background-color: #5a6268;
 }
 
 .form-buttons {
