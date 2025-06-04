@@ -11,19 +11,52 @@ import {
   where
 } from 'https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js';
 
-// Load all quotes with filtering
+
+// Format numbers as accounting format (x,xxx.00)
+function formatAccounting(num) {
+  return parseFloat(num).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+
+// Load quotes with filtering
 async function loadQuotes(filterField = '', filterValue = '') {
   try {
     let q;
+    const quotesCollection = collection(db, "quotes");
+    
     if (filterField && filterValue) {
-      q = query(collection(db, "quotes"), where(filterField, ">=", filterValue), where(filterField, "<=", filterValue + '\uf8ff'));
+      // Special handling for numeric fields
+      if (['total', 'labor', 'materialsTotal'].includes(filterField)) {
+        const numValue = parseFloat(filterValue);
+        if (!isNaN(numValue)) {
+          q = query(quotesCollection, where(filterField, "==", numValue));
+        } else {
+          q = quotesCollection; // Fallback to all if invalid number
+        }
+      } else {
+        q = query(quotesCollection, 
+          where(filterField, ">=", filterValue),
+          where(filterField, "<=", filterValue + '\uf8ff')
+        );
+      }
     } else {
-      q = collection(db, "quotes");
+      q = quotesCollection;
     }
+
 
     const querySnapshot = await getDocs(q);
     const list = document.getElementById("quote-list");
     list.innerHTML = "";
+
+
+    if (querySnapshot.empty) {
+      list.innerHTML = '<div class="no-results">No estimates found matching your criteria</div>';
+      return;
+    }
+
 
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
@@ -37,7 +70,7 @@ async function loadQuotes(filterField = '', filterValue = '') {
           <div class="material-item">
             <span>${name}</span>
             <span>Qty: ${details.quantity}</span>
-            <span>$${details.price} ($${details.quantity * details.price})</span>
+            <span>$${formatAccounting(details.price)} ($${formatAccounting(details.quantity * details.price)})</span>
           </div>
         `).join('') : '<p>No materials specified</p>';
       
@@ -59,9 +92,9 @@ async function loadQuotes(filterField = '', filterValue = '') {
               ${materialsList}
             </div>
             <div class="price-summary">
-              <p><strong>Materials Total:</strong> $${data.materialsTotal || "0.00"}</p>
-              <p><strong>Labor:</strong> $${data.labor || "0.00"}</p>
-              <p class="total-price"><strong>Total Estimate:</strong> $${data.total || "0.00"}</p>
+              <p><strong>Materials Total:</strong> $${formatAccounting(data.materialsTotal || 0)}</p>
+              <p><strong>Labor:</strong> $${formatAccounting(data.labor || 0)}</p>
+              <p class="total-price"><strong>Total Estimate:</strong> $${formatAccounting(data.total || 0)}</p>
             </div>
           </div>
         </div>
@@ -74,16 +107,37 @@ async function loadQuotes(filterField = '', filterValue = '') {
     });
   } catch (error) {
     console.error("Error loading quotes:", error);
+    document.getElementById("quote-list").innerHTML = 
+      '<div class="error">Error loading estimates. Please try again.</div>';
   }
 }
 
-// Edit quote functionality
+
+// Delete quote with confirmation
+window.deleteQuote = async function(id) {
+  if (!confirm("Are you sure you want to permanently delete this estimate?")) return;
+  
+  try {
+    await deleteDoc(doc(db, "quotes", id));
+    loadQuotes();
+  } catch (error) {
+    console.error("Error deleting quote:", error);
+    alert("Failed to delete estimate. Please try again.");
+  }
+};
+
+
+// Edit quote - corrected labor cost field
 window.editQuote = async function(id) {
   try {
     const docRef = doc(db, "quotes", id);
     const docSnap = await getDoc(docRef);
     
-    if (!docSnap.exists()) return;
+    if (!docSnap.exists()) {
+      alert("Estimate not found!");
+      return;
+    }
+
 
     const data = docSnap.data();
     const card = document.querySelector(`.quote-card[data-id="${id}"]`);
@@ -124,7 +178,7 @@ window.editQuote = async function(id) {
         
         <div class="form-section">
           <h4>Pricing</h4>
-          <label>Labor Cost: $<input type="number" value="${data.labor || ''}" min="0" step="0.01" required></label>
+          <label>Labor Cost: $<input type="number" value="${data.labor || 0}" min="0" step="0.01" required id="labor-input"></label>
         </div>
         
         <div class="form-buttons">
@@ -135,36 +189,15 @@ window.editQuote = async function(id) {
     `;
   } catch (error) {
     console.error("Error editing quote:", error);
+    alert("Failed to load estimate for editing. Please try again.");
   }
 };
 
-// Add new material field
-window.addMaterialField = function() {
-  const container = document.getElementById('materials-container');
-  const newIndex = container.querySelectorAll('.material-edit').length;
-  
-  const div = document.createElement('div');
-  div.className = 'material-edit';
-  div.dataset.index = newIndex;
-  div.innerHTML = `
-    <input type="text" placeholder="Material name" required>
-    <input type="number" placeholder="Qty" min="1" step="1" required>
-    <input type="number" placeholder="Price" min="0" step="0.01" required>
-    <button type="button" class="remove-material" onclick="removeMaterialField(this)">×</button>
-  `;
-  container.appendChild(div);
-};
 
-// Remove material field
-window.removeMaterialField = function(button) {
-  button.closest('.material-edit').remove();
-};
-
-// Save quote with all details
+// Save quote - fixed labor cost reference
 window.saveQuote = async function(id) {
   try {
     const form = document.querySelector(`.quote-card[data-id="${id}"] .edit-form`);
-    const formData = new FormData(form);
     
     // Collect materials
     const materials = {};
@@ -185,7 +218,8 @@ window.saveQuote = async function(id) {
       materialsTotal += quantity * price;
     });
     
-    const labor = parseFloat(form.querySelector('input[type="number"]').value);
+    // Fixed labor cost reference - now using the correct ID
+    const labor = parseFloat(form.querySelector('#labor-input').value);
     const total = materialsTotal + labor;
     
     await updateDoc(doc(db, "quotes", id), {
@@ -208,7 +242,8 @@ window.saveQuote = async function(id) {
   }
 };
 
-// Filter functionality
+
+// Filter functionality - tested all fields
 window.applyFilter = function() {
   const filterField = document.getElementById('filter-field').value;
   const filterValue = document.getElementById('filter-value').value.trim();
@@ -216,13 +251,22 @@ window.applyFilter = function() {
   if (filterField && filterValue) {
     loadQuotes(filterField, filterValue);
   } else {
-    loadQuotes();
+    loadQuotes(); // Reset to show all if no filter
   }
 };
+
+
+// Reset filters
+window.resetFilters = function() {
+  document.getElementById('filter-field').value = '';
+  document.getElementById('filter-value').value = '';
+  loadQuotes();
+};
+
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   loadQuotes();
   document.getElementById('filter-button').addEventListener('click', applyFilter);
+  document.getElementById('reset-button').addEventListener('click', resetFilters);
 });
-

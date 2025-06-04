@@ -1,4 +1,3 @@
-/* style.css */
 :root {
   --coral: #FF7F50;
   --rust: #B7410E;
@@ -6,6 +5,8 @@
   --light-coral: #FFD8CC;
   --white: #FFFFFF;
   --dark: #333333;
+  --light-gray: #F5F5F5;
+  --medium-gray: #E0E0E0;
 }
 
 * {
@@ -20,7 +21,7 @@ body {
   padding: 0;
   display: flex;
   min-height: 100vh;
-  background-color: #FAFAFA;
+  background-color: var(--light-gray);
   color: var(--dark);
   line-height: 1.6;
 }
@@ -32,6 +33,9 @@ body {
   padding: 25px;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
   color: var(--white);
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 #sidebar h2 {
@@ -40,6 +44,9 @@ body {
   padding-bottom: 15px;
   border-bottom: 2px solid var(--light-coral);
   font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* Filter Controls */
@@ -54,6 +61,10 @@ body {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
+  color: var(--light-coral);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .filter-controls select,
@@ -64,11 +75,13 @@ body {
   border: none;
   border-radius: 4px;
   background-color: rgba(255, 255, 255, 0.9);
+  font-family: inherit;
 }
 
-#filter-button {
+#filter-button, #reset-button {
   width: 100%;
   padding: 12px;
+  margin-bottom: 10px;
   background-color: var(--coral);
   color: white;
   border: none;
@@ -76,23 +89,40 @@ body {
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.3s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 #filter-button:hover {
-  background-color: var(--rust);
+  background-color: var(--deep-red);
+}
+
+#reset-button {
+  background-color: #757575;
+}
+
+#reset-button:hover {
+  background-color: #616161;
 }
 
 /* Main Content */
 #main {
   flex: 1;
   padding: 30px;
-  overflow-y: auto;
+  margin-left: 300px;
+  background-color: var(--light-gray);
 }
 
 #main h1 {
   color: var(--deep-red);
   margin-bottom: 25px;
   font-size: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* Quote Card */
@@ -104,6 +134,11 @@ body {
   overflow: hidden;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
   border-left: 6px solid var(--coral);
+  transition: transform 0.2s;
+}
+
+.quote-card:hover {
+  transform: translateY(-3px);
 }
 
 .quote-content {
@@ -117,7 +152,7 @@ body {
   align-items: center;
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #EEE;
+  border-bottom: 1px solid var(--medium-gray);
 }
 
 .quote-header h3 {
@@ -158,7 +193,7 @@ body {
   display: flex;
   justify-content: space-between;
   padding: 8px 0;
-  border-bottom: 1px dashed #EEE;
+  border-bottom: 1px dashed var(--medium-gray);
 }
 
 .price-summary {
@@ -189,7 +224,7 @@ body {
 .form-section {
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #EEE;
+  border-bottom: 1px solid var(--medium-gray);
 }
 
 .form-section h4 {
@@ -210,8 +245,9 @@ body {
   width: 100%;
   padding: 10px;
   margin-top: 5px;
-  border: 1px solid #DDD;
+  border: 1px solid var(--medium-gray);
   border-radius: 4px;
+  font-family: inherit;
 }
 
 .material-edit {
@@ -233,6 +269,7 @@ body {
   height: 30px;
   border-radius: 50%;
   cursor: pointer;
+  font-weight: bold;
 }
 
 .add-material {
@@ -243,6 +280,7 @@ body {
   border-radius: 4px;
   cursor: pointer;
   margin-top: 10px;
+  font-family: inherit;
 }
 
 /* Buttons */
@@ -251,7 +289,8 @@ body {
   flex-direction: column;
   padding: 20px;
   background: rgba(183, 65, 14, 0.05);
-  border-left: 1px solid #EEE;
+  border-left: 1px solid var(--medium-gray);
+  min-width: 150px;
 }
 
 .edit-btn, .delete-btn {
@@ -262,6 +301,11 @@ body {
   cursor: pointer;
   font-weight: 500;
   transition: all 0.3s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .edit-btn {
@@ -300,14 +344,41 @@ body {
   padding: 12px 20px;
 }
 
-/* Responsive */
+/* Status Messages */
+.no-results, .error {
+  padding: 20px;
+  text-align: center;
+  background-color: #FFEBEE;
+  border-radius: 8px;
+  margin: 20px 0;
+  color: #C62828;
+}
+
+.error {
+  background-color: #FFCDD2;
+}
+
+/* Number Input Fixes */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Responsive Design */
 @media (max-width: 992px) {
-  body {
-    flex-direction: column;
-  }
-  
   #sidebar {
     width: 100%;
+    position: static;
+    height: auto;
+  }
+  
+  #main {
+    margin-left: 0;
   }
   
   .pricing-details {
@@ -324,6 +395,11 @@ body {
     flex-direction: row;
     justify-content: center;
     border-left: none;
-    border-top: 1px solid #EEE;
+    border-top: 1px solid var(--medium-gray);
+    padding: 15px;
+  }
+  
+  .edit-btn, .delete-btn {
+    margin: 0 5px;
   }
 }
