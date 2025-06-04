@@ -7,6 +7,9 @@
   --dark: #333333;
   --light-gray: #F5F5F5;
   --medium-gray: #E0E0E0;
+  --success-green: #4CAF50;
+  --info-blue: #2196F3;
+  --danger-red: #DC3545;
 }
 
 * {
@@ -69,17 +72,20 @@ body {
   background-color: rgba(255, 255, 255, 0.9);
 }
 
-#filter-button, #reset-button {
+#filter-button, #reset-button, #export-button {
   width: 100%;
   padding: 12px;
   margin-bottom: 10px;
-  background-color: var(--coral);
   color: white;
   border: none;
   border-radius: 4px;
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.3s;
+}
+
+#filter-button {
+  background-color: var(--coral);
 }
 
 #filter-button:hover {
@@ -92,6 +98,14 @@ body {
 
 #reset-button:hover {
   background-color: #616161;
+}
+
+#export-button {
+  background-color: var(--info-blue);
+}
+
+#export-button:hover {
+  background-color: #0b7dda;
 }
 
 #main {
@@ -188,6 +202,14 @@ body {
   margin-bottom: 10px;
 }
 
+.discount-display {
+  color: var(--success-green);
+}
+
+.fees-display {
+  color: var(--info-blue);
+}
+
 .total-price {
   font-size: 1.1rem;
   color: var(--deep-red);
@@ -195,6 +217,16 @@ body {
   margin-top: 10px;
   padding-top: 10px;
   border-top: 2px solid var(--light-coral);
+}
+
+.job-details {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--medium-gray);
+}
+
+.job-details p {
+  margin-bottom: 5px;
 }
 
 .edit-form {
@@ -266,10 +298,10 @@ body {
   padding: 20px;
   background: rgba(183, 65, 14, 0.05);
   border-left: 1px solid var(--medium-gray);
-  min-width: 150px;
+  min-width: 180px;
 }
 
-.edit-btn, .delete-btn {
+.edit-btn, .delete-btn, .pdf-btn {
   padding: 10px 15px;
   margin-bottom: 10px;
   border: none;
@@ -277,11 +309,11 @@ body {
   cursor: pointer;
   font-weight: 500;
   transition: all 0.3s;
+  color: white;
 }
 
 .edit-btn {
   background-color: var(--coral);
-  color: white;
 }
 
 .edit-btn:hover {
@@ -289,12 +321,19 @@ body {
 }
 
 .delete-btn {
-  background-color: #DC3545;
-  color: white;
+  background-color: var(--danger-red);
 }
 
 .delete-btn:hover {
   background-color: #C82333;
+}
+
+.pdf-btn {
+  background-color: var(--success-green);
+}
+
+.pdf-btn:hover {
+  background-color: #45a049;
 }
 
 .form-buttons {
@@ -361,13 +400,16 @@ input[type="number"]::-webkit-inner-spin-button {
   
   .quote-actions {
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: center;
     border-left: none;
     border-top: 1px solid var(--medium-gray);
     padding: 15px;
   }
   
-  .edit-btn, .delete-btn {
-    margin: 0 5px;
+  .edit-btn, .delete-btn, .pdf-btn {
+    margin: 5px;
+    flex: 1;
+    min-width: 100px;
   }
 }

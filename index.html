@@ -20,9 +20,11 @@
         <option value="email">Email</option>
         <option value="phone">Phone</option>
         <option value="location">Location</option>
-        <option value="service">Service</option>
+        <option value="project">Project</option>
         <option value="total">Total Amount</option>
         <option value="labor">Labor Cost</option>
+        <option value="discount">Discount</option>
+        <option value="fees">Fees</option>
       </select>
       
       <label for="filter-value"><i class="fas fa-search"></i> Search Value:</label>
@@ -32,7 +34,7 @@
       <button id="reset-button"><i class="fas fa-undo"></i> Reset Filters</button>
     </div>
     
-    <button onclick="exportToCSV()"><i class="fas fa-file-export"></i> Export to CSV</button>
+    <button id="export-button" onclick="exportToCSV()"><i class="fas fa-file-export"></i> Export to CSV</button>
   </div>
 
   <div id="main">
@@ -41,5 +43,12 @@
   </div>
 
   <script type="module" src="admin.js"></script>
+  
+  <script>
+    // Temporary placeholder for CSV export functionality
+    function exportToCSV() {
+      alert("CSV export functionality will be implemented here. For now, use the individual PDF export buttons on each estimate.");
+    }
+  </script>
 </body>
 </html>
