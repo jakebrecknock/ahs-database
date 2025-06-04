@@ -7,15 +7,9 @@
   --dark: #333333;
   --light-gray: #F5F5F5;
   --medium-gray: #E0E0E0;
-  --success-green: #4CAF50;
-  --info-blue: #2196F3;
-  --danger-red: #DC3545;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  --success: #28a745;
+  --danger: #dc3545;
+  --info: #17a2b8;
 }
 
 body {
@@ -26,390 +20,105 @@ body {
   min-height: 100vh;
   background-color: var(--light-gray);
   color: var(--dark);
-  line-height: 1.6;
 }
 
 #sidebar {
   width: 300px;
   background: linear-gradient(to bottom, var(--rust), var(--deep-red));
-  padding: 25px;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-  color: var(--white);
+  padding: 20px;
+  color: white;
   position: fixed;
   height: 100vh;
-  overflow-y: auto;
-}
-
-#sidebar h2 {
-  color: var(--white);
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid var(--light-coral);
-  font-size: 1.5rem;
 }
 
 .filter-controls {
-  margin-bottom: 25px;
-  background: rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
+  background: rgba(255,255,255,0.1);
   padding: 15px;
   border-radius: 8px;
-}
-
-.filter-controls label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: var(--light-coral);
 }
 
 .filter-controls select,
 .filter-controls input {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border: none;
-  border-radius: 4px;
-  background-color: rgba(255, 255, 255, 0.9);
-}
-
-#filter-button, #reset-button, #export-button {
-  width: 100%;
-  padding: 12px;
+  padding: 8px;
   margin-bottom: 10px;
-  color: white;
   border: none;
   border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-#filter-button {
-  background-color: var(--coral);
-}
-
-#filter-button:hover {
-  background-color: var(--deep-red);
-}
-
-#reset-button {
-  background-color: #757575;
-}
-
-#reset-button:hover {
-  background-color: #616161;
-}
-
-#export-button {
-  background-color: var(--info-blue);
-}
-
-#export-button:hover {
-  background-color: #0b7dda;
 }
 
 #main {
   flex: 1;
-  padding: 30px;
+  padding: 20px;
   margin-left: 300px;
-  background-color: var(--light-gray);
-}
-
-#main h1 {
-  color: var(--deep-red);
-  margin-bottom: 25px;
-  font-size: 2rem;
 }
 
 .quote-card {
-  display: flex;
-  background: var(--white);
-  margin-bottom: 20px;
+  background: white;
+  margin-bottom: 15px;
   border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  border-left: 6px solid var(--coral);
-  transition: transform 0.2s;
-}
-
-.quote-card:hover {
-  transform: translateY(-3px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  display: flex;
 }
 
 .quote-content {
   flex: 1;
-  padding: 20px;
-}
-
-.quote-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--medium-gray);
-}
-
-.quote-header h3 {
-  color: var(--deep-red);
-  font-size: 1.3rem;
-}
-
-.location {
-  background-color: var(--light-coral);
-  color: var(--rust);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.quote-details p {
-  margin-bottom: 8px;
-  color: #555;
-}
-
-.pricing-details {
-  display: flex;
-  margin-top: 20px;
-  gap: 30px;
-}
-
-.materials-list {
-  flex: 2;
-}
-
-.materials-list h4 {
-  color: var(--rust);
-  margin-bottom: 10px;
-}
-
-.material-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px dashed var(--medium-gray);
-}
-
-.price-summary {
-  flex: 1;
-  background: rgba(255, 127, 80, 0.05);
   padding: 15px;
-  border-radius: 6px;
-}
-
-.price-summary p {
-  margin-bottom: 10px;
-}
-
-.discount-display {
-  color: var(--success-green);
-}
-
-.fees-display {
-  color: var(--info-blue);
-}
-
-.total-price {
-  font-size: 1.1rem;
-  color: var(--deep-red);
-  font-weight: bold;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 2px solid var(--light-coral);
-}
-
-.job-details {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid var(--medium-gray);
-}
-
-.job-details p {
-  margin-bottom: 5px;
-}
-
-.edit-form {
-  padding: 15px;
-}
-
-.form-section {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid var(--medium-gray);
-}
-
-.form-section h4 {
-  color: var(--rust);
-  margin-bottom: 15px;
-}
-
-.edit-form label {
-  display: block;
-  margin-bottom: 10px;
-  font-weight: 500;
-}
-
-.edit-form input[type="text"],
-.edit-form input[type="email"],
-.edit-form input[type="tel"],
-.edit-form input[type="number"] {
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  border: 1px solid var(--medium-gray);
-  border-radius: 4px;
-}
-
-.material-edit {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-  align-items: center;
-}
-
-.material-edit input {
-  flex: 1;
-}
-
-.remove-material {
-  background: var(--deep-red);
-  color: white;
-  border: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.add-material {
-  background: var(--coral);
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 10px;
 }
 
 .quote-actions {
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  background: rgba(183, 65, 14, 0.05);
-  border-left: 1px solid var(--medium-gray);
-  min-width: 180px;
+  padding: 15px;
+  background: rgba(183,65,14,0.05);
+  min-width: 150px;
 }
 
-.edit-btn, .delete-btn, .pdf-btn {
-  padding: 10px 15px;
-  margin-bottom: 10px;
+button {
+  padding: 8px 12px;
+  margin-bottom: 8px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s;
   color: white;
 }
 
-.edit-btn {
-  background-color: var(--coral);
+.edit-btn { background-color: var(--coral); }
+.delete-btn { background-color: var(--danger); }
+.pdf-btn { background-color: var(--success); }
+.save-btn { background-color: var(--rust); }
+.cancel-btn { background-color: var(--medium-gray); color: var(--dark); }
+
+.price-summary {
+  background: rgba(255,127,80,0.05);
+  padding: 15px;
+  border-radius: 6px;
+  margin-top: 15px;
 }
 
-.edit-btn:hover {
-  background-color: var(--rust);
+.total-price {
+  font-weight: bold;
+  color: var(--deep-red);
+  font-size: 1.1em;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--light-coral);
 }
 
-.delete-btn {
-  background-color: var(--danger-red);
-}
-
-.delete-btn:hover {
-  background-color: #C82333;
-}
-
-.pdf-btn {
-  background-color: var(--success-green);
-}
-
-.pdf-btn:hover {
-  background-color: #45a049;
-}
-
-.form-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.save-btn {
-  background-color: var(--rust);
-  color: white;
-  padding: 12px 20px;
-}
-
-.cancel-btn {
-  background-color: #6C757D;
-  color: white;
-  padding: 12px 20px;
-}
-
-.no-results, .error {
-  padding: 20px;
-  text-align: center;
-  background-color: #FFEBEE;
-  border-radius: 8px;
-  margin: 20px 0;
-  color: #C62828;
-}
-
-.error {
-  background-color: #FFCDD2;
-}
-
-input[type="number"] {
-  -moz-appearance: textfield;
-}
-
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-@media (max-width: 992px) {
+@media (max-width: 768px) {
   #sidebar {
     width: 100%;
     position: static;
     height: auto;
   }
-  
   #main {
     margin-left: 0;
   }
-  
-  .pricing-details {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 768px) {
   .quote-card {
     flex-direction: column;
   }
-  
   .quote-actions {
     flex-direction: row;
-    flex-wrap: wrap;
     justify-content: center;
-    border-left: none;
-    border-top: 1px solid var(--medium-gray);
-    padding: 15px;
-  }
-  
-  .edit-btn, .delete-btn, .pdf-btn {
-    margin: 5px;
-    flex: 1;
-    min-width: 100px;
   }
 }
