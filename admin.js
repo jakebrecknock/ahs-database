@@ -130,7 +130,7 @@ async function loadQuotes(searchTerm = '') {
           <button class="action-btn edit-btn" onclick="editQuote('${quote.id}')">
             <i class="fas fa-edit"></i> Edit
           </button>
-          <button class="action-btn pdf-btn" onclick="generatePDF('${quote.id}')">
+          <button class="action-btn pdf-btn" onclick="window.generatePDF('${quote.id}')">
             <i class="fas fa-file-pdf"></i> PDF
           </button>
           <button class="action-btn delete-btn" onclick="deleteQuote('${quote.id}')">
@@ -147,7 +147,6 @@ async function loadQuotes(searchTerm = '') {
   }
 }
 
-// Edit quote with all fields
 window.editQuote = async function(id) {
   try {
     const docRef = doc(db, "quotes", id);
@@ -258,7 +257,6 @@ window.editQuote = async function(id) {
   }
 };
 
-// Add new material field
 window.addMaterialField = function() {
   const container = document.getElementById('materials-container');
   const div = document.createElement('div');
@@ -274,13 +272,11 @@ window.addMaterialField = function() {
   container.appendChild(div);
 };
 
-// Save quote with all fields
 window.saveQuote = async function(id) {
   try {
     const form = document.querySelector(`.quote-card[data-id="${id}"] .edit-form`);
     const materials = {};
     
-    // Collect materials data
     form.querySelectorAll('.material-edit-item').forEach(item => {
       const inputs = item.querySelectorAll('input');
       const name = inputs[0].value.trim();
@@ -292,14 +288,12 @@ window.saveQuote = async function(id) {
       }
     });
     
-    // Calculate totals CORRECTLY
     const materialsTotal = Object.values(materials).reduce((sum, item) => 
       sum + (item.price * item.quantity), 0);
     const labor = parseFloat(document.getElementById('labor-input').value);
     const discount = parseFloat(document.getElementById('discount-input').value) || 0;
     const fees = parseFloat(document.getElementById('fees-input').value) || 0;
     
-    // CORRECT CALCULATION:
     const subtotal = materialsTotal + labor;
     const discountAmount = subtotal * discount / 100;
     const total = subtotal - discountAmount + fees;
@@ -328,12 +322,10 @@ window.saveQuote = async function(id) {
   }
 };
 
-// Cancel editing
 window.cancelEdit = function(id) {
   loadQuotes();
 };
 
-// Delete quote
 window.deleteQuote = async function(id) {
   if (!confirm("Permanently delete this estimate?")) return;
   try {
@@ -345,11 +337,15 @@ window.deleteQuote = async function(id) {
   }
 };
 
-// Generate PDF
 window.generatePDF = async function(id) {
   try {
     const docRef = doc(db, "quotes", id);
     const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) {
+      alert("Estimate not found!");
+      return;
+    }
+
     const data = docSnap.data();
     const materialsTotal = calcMaterialsTotal(data.materials);
     const labor = data.labor || (data.total - materialsTotal);
