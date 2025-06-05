@@ -1,17 +1,20 @@
 :root {
-  --primary: #B7410E;
-  --primary-light: #FF7F50;
-  --primary-lightest: #FFD8CC;
-  --secondary: #2C3E50;
+  --primary: #4caf50;
+  --primary-light: #45a049;
+  --primary-lightest: #e8f5e9;
+  --secondary: #2196F3;
   --text: #333333;
   --text-light: #777777;
-  --background: #F8F9FA;
+  --background: #f0f0f0;
   --card-bg: #FFFFFF;
-  --border: #E0E0E0;
-  --success: #28A745;
-  --danger: #DC3545;
-  --info: #17A2B8;
-  --warning: #FFC107;
+  --border: #ddd;
+  --success: #4caf50;
+  --danger: #f44336;
+  --info: #2196F3;
+  --warning: #ff9800;
+  --light-gray: #f8f8f8;
+  --medium-gray: #e0e0e0;
+  --dark-gray: #757575;
 }
 
 * {
@@ -56,7 +59,7 @@ h4 {
 /* Sidebar */
 #sidebar {
   width: 300px;
-  background: linear-gradient(to bottom, var(--primary), #9B2D1F);
+  background: linear-gradient(to bottom, var(--primary), var(--primary-light));
   padding: 25px;
   color: white;
   position: fixed;
@@ -69,7 +72,7 @@ h4 {
 #sidebar h2 {
   margin-bottom: 25px;
   padding-bottom: 15px;
-  border-bottom: 2px solid var(--primary-light);
+  border-bottom: 2px solid rgba(255,255,255,0.2);
   font-size: 1.5rem;
   display: flex;
   align-items: center;
@@ -78,18 +81,18 @@ h4 {
 
 /* Search container */
 .search-container {
-  background: rgba(255,255,255,0.1);
-  padding: 20px;
+  background: rgba(255,255,255,0.2);
+  padding: 15px;
   border-radius: 8px;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .search-container label {
   display: block;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   font-weight: 500;
-  color: var(--primary-lightest);
-  font-size: 1.1rem;
+  color: white;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -97,23 +100,23 @@ h4 {
 
 #search-input {
   width: 100%;
-  padding: 12px 15px;
+  padding: 10px 12px;
   border: none;
   border-radius: 6px;
-  font-size: 16px;
+  font-size: 14px;
   background-color: rgba(255,255,255,0.95);
   transition: all 0.3s;
 }
 
 #search-input:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(255,127,80,0.3);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
 }
 
 .search-buttons {
   display: flex;
-  gap: 10px;
-  margin-top: 15px;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 /* Buttons */
@@ -121,10 +124,10 @@ h4 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 20px;
+  padding: 10px 15px;
   border: none;
   border-radius: 6px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -132,22 +135,22 @@ h4 {
 }
 
 .button-primary {
-  background-color: var(--primary-light);
+  background-color: var(--primary);
   color: white;
 }
 
 .button-primary:hover {
-  background-color: var(--primary);
+  background-color: var(--primary-light);
   transform: translateY(-1px);
 }
 
 .button-secondary {
-  background-color: #6C757D;
+  background-color: var(--secondary);
   color: white;
 }
 
 .button-secondary:hover {
-  background-color: #5A6268;
+  background-color: #0b7dda;
   transform: translateY(-1px);
 }
 
@@ -183,7 +186,7 @@ h4 {
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
   display: flex;
   transition: all 0.3s;
-  border-left: 5px solid var(--primary-light);
+  border-left: 5px solid var(--primary);
 }
 
 .quote-card:hover {
@@ -284,7 +287,7 @@ h4 {
 
 /* Price summary */
 .price-summary {
-  background: rgba(255,127,80,0.05);
+  background: rgba(76, 175, 80, 0.05);
   padding: 20px;
   border-radius: 8px;
   margin: 25px 0;
@@ -339,7 +342,7 @@ h4 {
   display: flex;
   flex-direction: column;
   padding: 25px;
-  background: rgba(183,65,14,0.05);
+  background: rgba(76, 175, 80, 0.05);
   border-left: 1px solid var(--border);
   min-width: 180px;
   justify-content: center;
@@ -363,21 +366,21 @@ h4 {
 }
 
 .edit-btn {
-  background-color: var(--primary-light);
+  background-color: var(--primary);
   color: white;
 }
 
 .edit-btn:hover {
-  background-color: var(--primary);
+  background-color: var(--primary-light);
 }
 
 .pdf-btn {
-  background-color: var(--success);
+  background-color: var(--secondary);
   color: white;
 }
 
 .pdf-btn:hover {
-  background-color: #218838;
+  background-color: #0b7dda;
 }
 
 .delete-btn {
@@ -438,8 +441,8 @@ h4 {
 
 .form-group input:focus {
   outline: none;
-  border-color: var(--primary-light);
-  box-shadow: 0 0 0 3px rgba(255,127,80,0.2);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
 }
 
 .form-row {
@@ -491,7 +494,7 @@ h4 {
 }
 
 .add-material {
-  background: var(--primary-light);
+  background: var(--primary);
   color: white;
   border: none;
   padding: 12px 20px;
@@ -505,7 +508,7 @@ h4 {
 }
 
 .add-material:hover {
-  background: var(--primary);
+  background: var(--primary-light);
   transform: translateY(-2px);
 }
 
@@ -599,6 +602,14 @@ h4 {
     flex: 1 0 120px;
     margin: 5px !important;
     padding: 12px 15px !important;
+  }
+
+  .search-buttons {
+    flex-direction: row;
+  }
+  
+  .button {
+    flex: 1;
   }
 }
 
@@ -731,12 +742,12 @@ h4 {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--primary-light);
+  background: var(--primary);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary);
+  background: var(--primary-light);
 }
 
 /* Print styles */
@@ -778,19 +789,19 @@ h4 {
   }
   
   .search-container {
-    background: rgba(0,0,0,0.2);
+    background: rgba(0,0,0,0.3);
   }
   
   #search-input {
-    background-color: rgba(0,0,0,0.3);
+    background-color: rgba(0,0,0,0.4);
     color: white;
   }
   
   .price-summary {
-    background: rgba(183,65,14,0.1);
+    background: rgba(76, 175, 80, 0.1);
   }
   
   .quote-actions {
-    background: rgba(183,65,14,0.1);
+    background: rgba(76, 175, 80, 0.1);
   }
 }
