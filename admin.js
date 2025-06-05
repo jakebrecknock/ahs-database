@@ -53,8 +53,8 @@ async function loadQuotes(searchTerm = '') {
     quotes.forEach(quote => {
       const materialsTotal = calcMaterialsTotal(quote.materials);
       const labor = quote.labor || (quote.total - materialsTotal);
-      const discountAmount = (quote.discount || 0) * (materialsTotal + labor) / 100;
-      const finalTotal = (materialsTotal + labor) - discountAmount + (quote.fees || 0);
+      const discountAmount = (quote.discount || 0) * (materialsTotal + labor + (quote.fees || 0)) / 100;
+      const finalTotal = (materialsTotal + labor + (quote.fees || 0)) - discountAmount;
       
       const card = document.createElement("div");
       card.className = "quote-card";
@@ -295,8 +295,8 @@ window.saveQuote = async function(id) {
     const fees = parseFloat(document.getElementById('fees-input').value) || 0;
     
     const subtotal = materialsTotal + labor;
-    const discountAmount = subtotal * discount / 100;
-    const total = subtotal - discountAmount + fees;
+    const discountAmount = (subtotal + fees) * discount / 100;
+    const total = (subtotal + fees) - discountAmount;
     
     await updateDoc(doc(db, "quotes", id), {
       name: document.getElementById('name-input').value.trim(),

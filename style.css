@@ -76,12 +76,14 @@ h4 {
   gap: 10px;
 }
 
-/* Search container */
+/* Search container - UPDATED */
 .search-container {
   background: rgba(255,255,255,0.1);
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 25px;
+  display: flex;
+  flex-direction: column;
 }
 
 .search-container label {
@@ -110,10 +112,16 @@ h4 {
   box-shadow: 0 0 0 3px rgba(255,127,80,0.3);
 }
 
+/* Search buttons - UPDATED */
 .search-buttons {
   display: flex;
   gap: 10px;
   margin-top: 15px;
+  width: 100%;
+}
+
+.search-buttons .button {
+  flex: 1;
 }
 
 /* Buttons */
