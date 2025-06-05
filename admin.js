@@ -8,6 +8,34 @@ import {
   updateDoc
 } from 'https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js';
 
+// Password Protection
+const ADMIN_PASSWORD = "AHS-ADMIN"; // Change this to your desired password
+function checkAuth() {
+  const storedAuth = localStorage.getItem('handymanAuth');
+  if (storedAuth === ADMIN_PASSWORD) return true;
+  
+  const password = prompt("Please enter the admin password:");
+  if (password === ADMIN_PASSWORD) {
+    localStorage.setItem('handymanAuth', password);
+    return true;
+  }
+  
+  alert("Incorrect password. Access denied.");
+  window.location.href = "about:blank"; // Redirect to blank page
+  return false;
+}
+// Initialize - check auth first
+document.addEventListener('DOMContentLoaded', () => {
+  if (!checkAuth()) return;
+  
+  // Rest of your existing initialization code...
+  loadQuotes();
+  
+  // Search functionality
+  const searchInput = document.getElementById('search-input');
+
+
+
 // Format currency
 const formatMoney = (num) => parseFloat(num || 0).toLocaleString('en-US', {
   style: 'currency',
@@ -498,4 +526,5 @@ document.addEventListener('DOMContentLoaded', () => {
   searchInput.addEventListener('keyup', (e) => {
     if (e.key === 'Enter') searchBtn.click();
   });
+});
 });
