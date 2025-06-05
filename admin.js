@@ -24,17 +24,19 @@ function checkAuth() {
   window.location.href = "about:blank"; // Redirect to blank page
   return false;
 }
-// Initialize - check auth first
-document.addEventListener('DOMContentLoaded', () => {
-  if (!checkAuth()) return;
-  
-  // Rest of your existing initialization code...
-  loadQuotes();
-  
-  // Search functionality
-  const searchInput = document.getElementById('search-input');
 
-
+// Format phone number with hyphens
+function formatPhoneNumber(phone) {
+  if (!phone) return '';
+  // Remove all non-digit characters
+  const cleaned = ('' + phone).replace(/\D/g, '');
+  // Format as xxx-xxx-xxxx
+  const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+  if (match) {
+    return match[1] + '-' + match[2] + '-' + match[3];
+  }
+  return phone; // Return original if not 10 digits
+}
 
 // Format currency
 const formatMoney = (num) => parseFloat(num || 0).toLocaleString('en-US', {
@@ -55,6 +57,26 @@ async function searchQuotes(searchText) {
     });
 }
 
+// Sort quotes based on selected option
+function sortQuotes(quotes, sortOption) {
+  switch(sortOption) {
+    case 'date-newest':
+      return [...quotes].sort((a, b) => b.timestamp?.toDate() - a.timestamp?.toDate());
+    case 'date-oldest':
+      return [...quotes].sort((a, b) => a.timestamp?.toDate() - b.timestamp?.toDate());
+    case 'price-high':
+      return [...quotes].sort((a, b) => (b.total || 0) - (a.total || 0));
+    case 'price-low':
+      return [...quotes].sort((a, b) => (a.total || 0) - (b.total || 0));
+    case 'name-asc':
+      return [...quotes].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    case 'name-desc':
+      return [...quotes].sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+    default:
+      return quotes;
+  }
+}
+
 // Calculate materials total
 function calcMaterialsTotal(materials) {
   if (!materials) return 0;
@@ -62,15 +84,18 @@ function calcMaterialsTotal(materials) {
     total + (item.price * item.quantity), 0);
 }
 
-// Load quotes with optional search
-async function loadQuotes(searchTerm = '') {
+// Load quotes with optional search and sort
+async function loadQuotes(searchTerm = '', sortOption = 'date-newest') {
   try {
     const list = document.getElementById("quote-list");
     list.innerHTML = "<div class='loading'><i class='fas fa-spinner fa-spin'></i> Loading estimates...</div>";
     
-    const quotes = searchTerm 
+    let quotes = searchTerm 
       ? await searchQuotes(searchTerm)
       : (await getDocs(collection(db, "quotes"))).docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Sort the quotes
+    quotes = sortQuotes(quotes, sortOption);
 
     if (quotes.length === 0) {
       list.innerHTML = `<div class="no-results"><i class="fas fa-info-circle"></i> ${searchTerm ? 'No matches found' : 'No estimates yet'}</div>`;
@@ -101,7 +126,7 @@ async function loadQuotes(searchTerm = '') {
           
           <div class="contact-info">
             ${quote.email ? `<p><i class="fas fa-envelope"></i> ${quote.email}</p>` : ''}
-            ${quote.phone ? `<p><i class="fas fa-phone"></i> ${quote.phone}</p>` : ''}
+            ${quote.phone ? `<p><i class="fas fa-phone"></i> ${formatPhoneNumber(quote.phone)}</p>` : ''}
           </div>
           
           <div class="materials-section">
@@ -201,7 +226,7 @@ window.editQuote = async function(id) {
             </div>
             <div class="form-group">
               <label><i class="fas fa-phone"></i> Phone</label>
-              <input type="tel" value="${data.phone || ''}" id="phone-input">
+              <input type="tel" value="${formatPhoneNumber(data.phone) || ''}" id="phone-input" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" placeholder="123-456-7890">
             </div>
           </div>
           <div class="form-group">
@@ -279,6 +304,20 @@ window.editQuote = async function(id) {
         </div>
       </form>
     `;
+
+    // Add phone number formatting
+    const phoneInput = card.querySelector('#phone-input');
+    phoneInput.addEventListener('input', function(e) {
+      // Remove non-digit characters
+      let value = this.value.replace(/\D/g, '');
+      // Format as xxx-xxx-xxxx
+      if (value.length > 3 && value.length <= 6) {
+        value = value.slice(0, 3) + '-' + value.slice(3);
+      } else if (value.length > 6) {
+        value = value.slice(0, 3) + '-' + value.slice(3, 6) + '-' + value.slice(6, 10);
+      }
+      this.value = value;
+    });
   } catch (error) {
     console.error("Error:", error);
     alert("Failed to load estimate for editing");
@@ -326,10 +365,13 @@ window.saveQuote = async function(id) {
     const discountAmount = (subtotal + fees) * discount / 100;
     const total = (subtotal + fees) - discountAmount;
     
+    // Clean phone number before saving (remove hyphens)
+    const phone = document.getElementById('phone-input').value.replace(/\D/g, '');
+    
     await updateDoc(doc(db, "quotes", id), {
       name: document.getElementById('name-input').value.trim(),
       email: document.getElementById('email-input').value.trim(),
-      phone: document.getElementById('phone-input').value.trim(),
+      phone: phone,
       location: document.getElementById('location-input').value.trim(),
       project: document.getElementById('project-input').value.trim(),
       materials,
@@ -420,7 +462,7 @@ window.generatePDF = async function(id) {
           <p><strong>Project:</strong> ${data.project || "General work"}</p>
           <p><strong>Location:</strong> ${data.location || "Not specified"}</p>
           ${data.email ? `<p><strong>Email:</strong> ${data.email}</p>` : ''}
-          ${data.phone ? `<p><strong>Phone:</strong> ${data.phone}</p>` : ''}
+          ${data.phone ? `<p><strong>Phone:</strong> ${formatPhoneNumber(data.phone)}</p>` : ''}
           <p><strong>Date:</strong> ${new Date(data.timestamp?.toDate()).toLocaleDateString()}</p>
         </div>
         
@@ -506,6 +548,8 @@ window.generatePDF = async function(id) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+  if (!checkAuth()) return;
+  
   loadQuotes();
   
   // Search functionality
@@ -514,17 +558,21 @@ document.addEventListener('DOMContentLoaded', () => {
   
   searchBtn.addEventListener('click', () => {
     if (searchInput.value.trim()) {
-      loadQuotes(searchInput.value.trim());
+      loadQuotes(searchInput.value.trim(), document.getElementById('sort-select').value);
     }
   });
   
   document.getElementById('reset-button').addEventListener('click', () => {
     searchInput.value = '';
-    loadQuotes();
+    loadQuotes('', document.getElementById('sort-select').value);
   });
   
   searchInput.addEventListener('keyup', (e) => {
     if (e.key === 'Enter') searchBtn.click();
   });
-});
+  
+  // Sort functionality
+  document.getElementById('sort-select').addEventListener('change', (e) => {
+    loadQuotes(searchInput.value.trim(), e.target.value);
+  });
 });
