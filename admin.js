@@ -422,8 +422,7 @@ window.generatePDF = async function(id) {
     const discountAmount = (data.discount || 0) * (materialsTotal + labor) / 100;
     const finalTotal = (materialsTotal + labor) - discountAmount + (data.fees || 0);
     
-    const win = window.open('', '_blank');
-    win.document.write(`
+    const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -433,6 +432,7 @@ window.generatePDF = async function(id) {
           body { font-family: 'Roboto', sans-serif; padding: 25px; color: #333; line-height: 1.6; }
           .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
           .company { color: #B7410E; font-size: 24px; font-weight: 500; }
+          .address { font-size: 14px; color: #666; margin-top: 5px; }
           .title { font-size: 28px; color: #B7410E; margin: 25px 0; border-bottom: 2px solid #FF7F50; padding-bottom: 10px; }
           .client-info { margin-bottom: 30px; }
           .client-info p { margin: 8px 0; }
@@ -451,7 +451,10 @@ window.generatePDF = async function(id) {
       </head>
       <body>
         <div class="header">
-          <div class="company">Handyman Pro</div>
+          <div>
+            <div class="company">ACE Handyman Services</div>
+            <div class="address">207 N. Harlem Ave., Oak Park IL., 60302</div>
+          </div>
           <div>Estimate #${id.substring(0, 8)}</div>
         </div>
         
@@ -526,23 +529,32 @@ window.generatePDF = async function(id) {
         </div>
         
         <div class="footer">
-          <p>Thank you for choosing Handyman Pro!</p>
+          <p>Thank you for choosing ACE Handyman Services!</p>
           <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
         </div>
-        
-        <script>
-          setTimeout(() => {
-            window.print();
-            window.close();
-          }, 300);
-        </script>
       </body>
       </html>
-    `);
-    win.document.close();
+    `;
+
+    // Create a Blob with the HTML content
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a download link and trigger it
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ACE_Estimate_${id.substring(0, 8)}.html`; // Saves as HTML file that can be opened in Word
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
   } catch (error) {
     console.error("Error generating PDF:", error);
-    alert("Failed to generate PDF");
+    alert("Failed to generate document");
   }
 };
 
